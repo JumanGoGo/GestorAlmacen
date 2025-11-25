@@ -1,0 +1,26 @@
+﻿<Window x:Class="GestorAlmacen.MainWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Sistema Gestor de Almacén" Height="700" Width="1000" WindowStartupLocation="CenterScreen">
+    <Grid>
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="200"/>
+            <ColumnDefinition Width="*"/>
+        </Grid.ColumnDefinitions>
+
+        <Border Background="#333" Grid.Column="0">
+            <StackPanel>
+                <TextBlock Text="MENÚ" Foreground="White" FontSize="20" Margin="20"/>
+                <Button Content="Inventario" Height="40" Click="Nav_Click" Tag="Inventario"/>
+                <Button Content="Entradas" Height="40" Click="Nav_Click" Tag="Entradas"/>
+                <Button Content="Salidas" Height="40" Click="Nav_Click" Tag="Salidas"/>
+                <Button Content="Movimientos" Height="40" Click="Nav_Click" Tag="Movimientos"/>
+                <Button Content="Áreas" Height="40" Click="Nav_Click" Tag="Areas"/>
+                <Button x:Name="btnProductos" Content="Productos" Height="40" Click="Nav_Click" Tag="Productos"/>
+                <Button Content="Salir" Height="40" Margin="0,50,0,0" Background="#C0392B" Click="Salir_Click"/>
+            </StackPanel>
+        </Border>
+
+        <Frame x:Name="MainContent" Grid.Column="1" NavigationUIVisibility="Hidden"/>
+    </Grid>
+</Window>

@@ -1,0 +1,45 @@
+﻿<Page x:Class="GestorAlmacen.Views.ProductosView"
+      xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+      xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+      Title="Productos" Height="400" Width="800">
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <StackPanel Orientation="Horizontal" Grid.Row="0" Margin="0,0,0,15">
+            <TextBlock Text="SKU:" VerticalAlignment="Center" Margin="0,0,5,0"/>
+            <TextBox x:Name="txtFiltroSku" Width="100" Margin="0,0,15,0"/>
+
+            <TextBlock Text="Nombre:" VerticalAlignment="Center" Margin="0,0,5,0"/>
+            <TextBox x:Name="txtFiltroNombre" Width="150" Margin="0,0,15,0"/>
+
+            <Button Content="Buscar" Width="80" Click="btnBuscar_Click"/>
+
+            <Border Width="200"/>
+
+            <Button Content="+ Nuevo Producto" Background="#27AE60" Foreground="White" Click="btnNuevo_Click"/>
+        </StackPanel>
+
+        <DataGrid x:Name="gridProductos" Grid.Row="1" AutoGenerateColumns="False" CanUserAddRows="False" IsReadOnly="True">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="SKU" Binding="{Binding SKU}" Width="80"/>
+                <DataGridTextColumn Header="Nombre" Binding="{Binding Nombre}" Width="*"/>
+                <DataGridTextColumn Header="Precio" Binding="{Binding PrecioFormateado}" Width="80"/>
+                <DataGridTextColumn Header="Observaciones" Binding="{Binding Observaciones}" Width="150"/>
+
+                <DataGridTemplateColumn Header="Acciones" Width="140">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <StackPanel Orientation="Horizontal">
+                                <Button Content="Editar" Margin="2" Click="btnEditar_Click"/>
+                                <Button Content="Eliminar" Margin="2" Background="#E74C3C" Foreground="White" Click="btnEliminar_Click"/>
+                            </StackPanel>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+            </DataGrid.Columns>
+        </DataGrid>
+    </Grid>
+</Page>
