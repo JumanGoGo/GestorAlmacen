@@ -1,0 +1,65 @@
+﻿<UserControl x:Class="GestorAlmacen.Views.InventarioView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             mc:Ignorable="d" 
+             d:DesignHeight="500" d:DesignWidth="800" Background="White">
+
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <TextBlock Text="Consultar Existencias" Grid.Row="0" FontSize="24" FontWeight="Bold" Foreground="#333" Margin="0,0,0,15"/>
+
+        <Border Grid.Row="1" Background="#F9F9F9" BorderBrush="#EEE" BorderThickness="1" Padding="10" Margin="0,0,0,15">
+            <StackPanel Orientation="Horizontal">
+
+                <StackPanel Margin="0,0,20,0">
+                    <TextBlock Text="Buscar (SKU o Producto):" FontWeight="SemiBold" Margin="0,0,0,5"/>
+                    <TextBox x:Name="txtBuscar" Width="200" Padding="5" TextChanged="Filtros_Changed"/>
+                </StackPanel>
+
+                <StackPanel Margin="0,0,20,0">
+                    <TextBlock Text="Filtrar por Área:" FontWeight="SemiBold" Margin="0,0,0,5"/>
+                    <ComboBox x:Name="cmbAreas" Width="120" Padding="5" SelectionChanged="Filtros_Changed">
+                        <ComboBoxItem Content="Todas" IsSelected="True"/>
+                    </ComboBox>
+                </StackPanel>
+
+                <Button Content="Refrescar" Height="28" VerticalAlignment="Bottom" Padding="10,0" Click="btnRefrescar_Click"/>
+            </StackPanel>
+        </Border>
+
+        <DataGrid x:Name="dgStock" Grid.Row="2" AutoGenerateColumns="False" IsReadOnly="True" 
+                  CanUserAddRows="False" GridLinesVisibility="Horizontal" HeadersVisibility="Column">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="Área" Binding="{Binding CodigoArea}" Width="80" FontWeight="Bold"/>
+                <DataGridTextColumn Header="SKU" Binding="{Binding Sku}" Width="100"/>
+                <DataGridTextColumn Header="Producto" Binding="{Binding NombreProducto}" Width="*"/>
+                <DataGridTextColumn Header="Categoría" Binding="{Binding Categoria}" Width="150"/>
+                <DataGridTextColumn Header="Cantidad" Binding="{Binding Cantidad}" Width="100">
+                    <DataGridTextColumn.ElementStyle>
+                        <Style TargetType="TextBlock">
+                            <Setter Property="HorizontalAlignment" Value="Right"/>
+                            <Setter Property="Padding" Value="0,0,10,0"/>
+                        </Style>
+                    </DataGridTextColumn.ElementStyle>
+                </DataGridTextColumn>
+            </DataGrid.Columns>
+        </DataGrid>
+
+        <StatusBar Grid.Row="3" Margin="0,10,0,0" Background="#EEE" Padding="5">
+            <StatusBarItem>
+                <TextBlock Text="Total de unidades listadas:" FontWeight="Bold"/>
+            </StatusBarItem>
+            <StatusBarItem>
+                <TextBlock x:Name="txtTotalCantidad" Text="0" FontWeight="Bold" Foreground="#007ACC"/>
+            </StatusBarItem>
+        </StatusBar>
+    </Grid>
+</UserControl>

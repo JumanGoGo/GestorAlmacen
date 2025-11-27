@@ -55,11 +55,33 @@
       <Generator>MSBuild:Compile</Generator>
       <SubType>Designer</SubType>
     </ApplicationDefinition>
+    <Compile Include="Helpers\Converters.cs" />
+    <Compile Include="Views\AreasView.xaml.cs">
+      <DependentUpon>AreasView.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\CategoriasView.xaml.cs">
+      <DependentUpon>CategoriasView.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\InventarioView.xaml.cs">
+      <DependentUpon>InventarioView.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Views\LoginView.xaml.cs">
       <DependentUpon>LoginView.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Views\MovimientosView.xaml.cs">
+      <DependentUpon>MovimientosView.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Views\ProductosView.xaml.cs">
       <DependentUpon>ProductosView.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Views\UsuariosView.xaml.cs">
+      <DependentUpon>UsuariosView.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Windows\ProductoFormWindow.xaml.cs">
+      <DependentUpon>ProductoFormWindow.xaml</DependentUpon>
+    </Compile>
+    <Compile Include="Windows\RegistrarMovimientoWindow.xaml.cs">
+      <DependentUpon>RegistrarMovimientoWindow.xaml</DependentUpon>
     </Compile>
     <Page Include="MainWindow.xaml">
       <Generator>MSBuild:Compile</Generator>
@@ -73,11 +95,39 @@
       <DependentUpon>MainWindow.xaml</DependentUpon>
       <SubType>Code</SubType>
     </Compile>
+    <Page Include="Views\AreasView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\CategoriasView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\InventarioView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="Views\LoginView.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
+    <Page Include="Views\MovimientosView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
     <Page Include="Views\ProductosView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\UsuariosView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Windows\ProductoFormWindow.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Windows\RegistrarMovimientoWindow.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>
@@ -109,8 +159,6 @@
   <ItemGroup>
     <None Include="App.config" />
   </ItemGroup>
-  <ItemGroup>
-    <Folder Include="Windows\" />
-  </ItemGroup>
+  <ItemGroup />
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
 </Project>

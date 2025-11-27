@@ -1,0 +1,115 @@
+﻿<Window x:Class="GestorAlmacen.Views.Windows.RegistrarMovimientoWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Registrar Movimiento de Inventario" Height="600" Width="900"
+        WindowStartupLocation="CenterScreen" ResizeMode="NoResize" Background="#F4F4F4">
+
+    <Grid Margin="20">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <Border Grid.Row="0" Background="White" Padding="15" CornerRadius="5" Margin="0,0,0,15">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="Auto"/>
+                    <ColumnDefinition Width="*"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel>
+                    <TextBlock Text="Tipo de Operación:" FontWeight="Bold" Margin="0,0,0,5"/>
+                    <ComboBox x:Name="cmbTipoMovimiento" Width="200" Padding="5" SelectionChanged="cmbTipoMovimiento_SelectionChanged">
+                        <ComboBoxItem Content="ENTRADA (Compra/Recepción)" Tag="ENTR" IsSelected="True"/>
+                        <ComboBoxItem Content="SALIDA (Venta/Consumo)" Tag="SAL"/>
+                        <ComboBoxItem Content="TRANSFERENCIA (Movimiento Interno)" Tag="TRANS"/>
+                    </ComboBox>
+                </StackPanel>
+
+                <StackPanel Grid.Column="1" Margin="20,0">
+                    <TextBlock Text="Comentario / Referencia:" FontWeight="Bold" Margin="0,0,0,5"/>
+                    <TextBox x:Name="txtComentario" Padding="5" Height="28"/>
+                </StackPanel>
+
+                <StackPanel Grid.Column="2" VerticalAlignment="Center">
+                    <TextBlock Text="Fecha:" Foreground="Gray"/>
+                    <TextBlock x:Name="lblFecha" Text="26/11/2025" FontWeight="Bold" FontSize="14"/>
+                </StackPanel>
+            </Grid>
+        </Border>
+
+        <GroupBox Grid.Row="1" Header="Detalle del Movimiento" Padding="10" Margin="0,0,0,15" Background="White">
+            <Grid>
+                <Grid.ColumnDefinitions>
+                    <ColumnDefinition Width="2*"/>
+                    <ColumnDefinition Width="1*"/>
+                    <ColumnDefinition Width="1*"/>
+                    <ColumnDefinition Width="100"/>
+                    <ColumnDefinition Width="Auto"/>
+                </Grid.ColumnDefinitions>
+
+                <StackPanel Grid.Column="0" Margin="0,0,10,0">
+                    <TextBlock Text="Producto (SKU o Nombre):" Margin="0,0,0,5"/>
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <TextBox x:Name="txtSkuBuscar" Padding="5"/>
+                        <Button Grid.Column="1" Content="🔍" Width="30" Click="btnBuscarProducto_Click"/>
+                    </Grid>
+                    <TextBlock x:Name="lblNombreProducto" Text="Seleccione un producto..." Foreground="Gray" FontStyle="Italic" Margin="0,5,0,0" FontSize="11"/>
+                </StackPanel>
+
+                <StackPanel x:Name="pnlOrigen" Grid.Column="1" Margin="0,0,10,0" Visibility="Collapsed">
+                    <TextBlock Text="Desde (Origen):" Margin="0,0,0,5" Foreground="#D32F2F" FontWeight="SemiBold"/>
+                    <ComboBox x:Name="cmbAreaOrigen" Padding="5"/>
+                    <TextBlock x:Name="lblStockOrigen" Text="Stock: -" FontSize="10" HorizontalAlignment="Right" Foreground="Gray"/>
+                </StackPanel>
+
+                <StackPanel x:Name="pnlDestino" Grid.Column="2" Margin="0,0,10,0">
+                    <TextBlock Text="Hacia (Destino):" Margin="0,0,0,5" Foreground="#388E3C" FontWeight="SemiBold"/>
+                    <ComboBox x:Name="cmbAreaDestino" Padding="5"/>
+                </StackPanel>
+
+                <StackPanel Grid.Column="3" Margin="0,0,10,0">
+                    <TextBlock Text="Cantidad:" Margin="0,0,0,5"/>
+                    <TextBox x:Name="txtCantidad" Padding="5" HorizontalContentAlignment="Center"/>
+                </StackPanel>
+
+                <Button Grid.Column="4" Content="Agregar +" Background="#007ACC" Foreground="White" FontWeight="Bold" 
+                        Width="80" Height="30" VerticalAlignment="Bottom" Click="btnAgregar_Click"/>
+            </Grid>
+        </GroupBox>
+
+        <DataGrid x:Name="dgDetalles" Grid.Row="2" AutoGenerateColumns="False" CanUserAddRows="False" 
+                  BorderBrush="#DDD" BorderThickness="1" Background="White">
+            <DataGrid.Columns>
+                <DataGridTextColumn Header="SKU" Binding="{Binding Sku}" Width="80" FontWeight="Bold"/>
+                <DataGridTextColumn Header="Producto" Binding="{Binding NombreProducto}" Width="*"/>
+                <DataGridTextColumn Header="Origen" Binding="{Binding AreaOrigen}" Width="80"/>
+                <DataGridTextColumn Header="Destino" Binding="{Binding AreaDestino}" Width="80"/>
+                <DataGridTextColumn Header="Cant." Binding="{Binding Cantidad}" Width="60" FontWeight="Bold"/>
+
+                <DataGridTemplateColumn Width="50">
+                    <DataGridTemplateColumn.CellTemplate>
+                        <DataTemplate>
+                            <Button Content="X" Foreground="Red" FontWeight="Bold" Click="btnQuitarFila_Click" Width="30"/>
+                        </DataTemplate>
+                    </DataGridTemplateColumn.CellTemplate>
+                </DataGridTemplateColumn>
+            </DataGrid.Columns>
+        </DataGrid>
+
+        <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,15,0,0">
+            <TextBlock Text="Total Artículos:" VerticalAlignment="Center" Margin="0,0,10,0"/>
+            <TextBlock x:Name="txtTotalItems" Text="0" VerticalAlignment="Center" FontWeight="Bold" Margin="0,0,20,0"/>
+
+            <Button Content="Cancelar" Width="100" Height="40" Margin="0,0,10,0" Background="White" Click="btnCancelar_Click"/>
+            <Button Content="CONFIRMAR MOVIMIENTO" Width="180" Height="40" Background="#2E7D32" Foreground="White" FontWeight="Bold" Click="btnGuardarTodo_Click"/>
+        </StackPanel>
+    </Grid>
+</Window>

@@ -1,26 +1,212 @@
 ﻿<Window x:Class="GestorAlmacen.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Sistema Gestor de Almacén" Height="700" Width="1000" WindowStartupLocation="CenterScreen">
+        Title="Jepack WMS - Sistema de Gestión de Almacén" Height="750" Width="1100" 
+        WindowStartupLocation="CenterScreen" Background="#F0F2F5">
+
+    <Window.Resources>
+        <!-- ESTILO PARA LOS BOTONES TIPO "MÓDULO" -->
+        <Style x:Key="ModuleButtonStyle" TargetType="Button">
+            <Setter Property="Background" Value="#34495E"/>
+            <!-- Color Base Oscuro -->
+            <Setter Property="Foreground" Value="White"/>
+            <Setter Property="Margin" Value="10,5,10,5"/>
+            <Setter Property="Height" Value="60"/>
+            <Setter Property="Cursor" Value="Hand"/>
+            <Setter Property="Template">
+                <Setter.Value>
+                    <ControlTemplate TargetType="Button">
+                        <Border Background="{TemplateBinding Background}" 
+                                CornerRadius="8" 
+                                BorderBrush="#2C3E50" 
+                                BorderThickness="0,0,0,3">
+                            <!-- Efecto 3D sutil abajo -->
+                            <Grid Margin="10,0">
+                                <Grid.ColumnDefinitions>
+                                    <ColumnDefinition Width="40"/>
+                                    <!-- Icono -->
+                                    <ColumnDefinition Width="*"/>
+                                    <!-- Texto -->
+                                    <ColumnDefinition Width="20"/>
+                                    <!-- Flecha -->
+                                </Grid.ColumnDefinitions>
+
+                                <!-- Icono (Content del botón) -->
+                                <ContentPresenter Grid.Column="0" HorizontalAlignment="Center" VerticalAlignment="Center" 
+                                                  TextElement.FontSize="24"/>
+
+                                <!-- Texto (Tag del botón usado como título) -->
+                                <TextBlock Grid.Column="1" Text="{TemplateBinding Tag}" 
+                                           VerticalAlignment="Center" FontWeight="SemiBold" FontSize="14" Margin="10,0,0,0"/>
+
+                                <!-- Indicador visual -->
+                                <TextBlock Grid.Column="2" Text="›" Foreground="#BDC3C7" 
+                                           VerticalAlignment="Center" HorizontalAlignment="Right" FontSize="18"/>
+                            </Grid>
+                        </Border>
+                        <ControlTemplate.Triggers>
+                            <Trigger Property="IsMouseOver" Value="True">
+                                <Setter Property="Background" Value="#2980B9"/>
+                                <!-- Azul al pasar mouse -->
+                                <Setter Property="RenderTransform">
+                                    <Setter.Value>
+                                        <TranslateTransform X="2"/>
+                                        <!-- Pequeño movimiento -->
+                                    </Setter.Value>
+                                </Setter>
+                            </Trigger>
+                            <Trigger Property="IsPressed" Value="True">
+                                <Setter Property="Background" Value="#1ABC9C"/>
+                                <!-- Verde al click -->
+                            </Trigger>
+                        </ControlTemplate.Triggers>
+                    </ControlTemplate>
+                </Setter.Value>
+            </Setter>
+        </Style>
+
+        <!-- ESTILO PARA SEPARADORES -->
+        <Style x:Key="MenuHeaderStyle" TargetType="TextBlock">
+            <Setter Property="Foreground" Value="#95A5A6"/>
+            <Setter Property="FontSize" Value="11"/>
+            <Setter Property="FontWeight" Value="Bold"/>
+            <Setter Property="Margin" Value="15,20,0,5"/>
+        </Style>
+    </Window.Resources>
+
     <Grid>
         <Grid.ColumnDefinitions>
-            <ColumnDefinition Width="200"/>
+            <ColumnDefinition Width="260"/>
+            <!-- Dock Lateral más ancho -->
             <ColumnDefinition Width="*"/>
         </Grid.ColumnDefinitions>
 
-        <Border Background="#333" Grid.Column="0">
-            <StackPanel>
-                <TextBlock Text="MENÚ" Foreground="White" FontSize="20" Margin="20"/>
-                <Button Content="Inventario" Height="40" Click="Nav_Click" Tag="Inventario"/>
-                <Button Content="Entradas" Height="40" Click="Nav_Click" Tag="Entradas"/>
-                <Button Content="Salidas" Height="40" Click="Nav_Click" Tag="Salidas"/>
-                <Button Content="Movimientos" Height="40" Click="Nav_Click" Tag="Movimientos"/>
-                <Button Content="Áreas" Height="40" Click="Nav_Click" Tag="Areas"/>
-                <Button x:Name="btnProductos" Content="Productos" Height="40" Click="Nav_Click" Tag="Productos"/>
-                <Button Content="Salir" Height="40" Margin="0,50,0,0" Background="#C0392B" Click="Salir_Click"/>
-            </StackPanel>
+        <!-- DOCK LATERAL -->
+        <Border Grid.Column="0" Background="#2C3E50">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <!-- Logo -->
+                    <RowDefinition Height="*"/>
+                    <!-- Scroll Menú -->
+                    <RowDefinition Height="Auto"/>
+                    <!-- Footer Usuario -->
+                </Grid.RowDefinitions>
+
+                <!-- 1. LOGO / BRANDING -->
+                <StackPanel Grid.Row="0" Margin="0,20,0,20" HorizontalAlignment="Center">
+                    <Border Width="60" Height="60" CornerRadius="30" Background="#E67E22" Margin="0,0,0,10">
+                        <TextBlock Text="📦" FontSize="30" HorizontalAlignment="Center" VerticalAlignment="Center"/>
+                    </Border>
+                    <TextBlock Text="Jepack Solutions" Foreground="White" FontSize="20" FontWeight="Bold" HorizontalAlignment="Center"/>
+                    <TextBlock Text="Gestión Inteligente" Foreground="#BDC3C7" FontSize="12" HorizontalAlignment="Center"/>
+                </StackPanel>
+
+                <!-- 2. LISTA DE MÓDULOS (SCROLL) -->
+                <ScrollViewer Grid.Row="1" VerticalScrollBarVisibility="Hidden">
+                    <StackPanel>
+
+                        <!-- MÓDULO: OPERACIONES -->
+                        <TextBlock Text="OPERACIONES DIARIAS" Style="{StaticResource MenuHeaderStyle}"/>
+
+                        <Button Style="{StaticResource ModuleButtonStyle}" Tag="Inventario" Click="Nav_Click">
+                            <TextBlock Text="📊"/>
+                            <!-- Icono Inventario -->
+                        </Button>
+
+                        <Button Style="{StaticResource ModuleButtonStyle}" Tag="Movimientos" Click="Nav_Click">
+                            <TextBlock Text="📋"/>
+                            <!-- Icono Historial -->
+                        </Button>
+
+                        <Grid Margin="5,0">
+                            <Grid.ColumnDefinitions>
+                                <ColumnDefinition Width="*"/>
+                                <ColumnDefinition Width="*"/>
+                            </Grid.ColumnDefinitions>
+                            <!-- Botones pequeños para acciones rápidas -->
+                            <Button Grid.Column="0" Content="📥" Tag="Entradas" Click="Nav_Click" 
+                                    ToolTip="Entrada Mercancía" Height="50" Margin="5"
+                                    Background="#27AE60" Foreground="White" FontSize="20" BorderThickness="0">
+                                <Button.Resources>
+                                    <Style TargetType="Border">
+                                        <Setter Property="CornerRadius" Value="8"/>
+                                    </Style>
+                                </Button.Resources>
+                            </Button>
+                            <Button Grid.Column="1" Content="📤" Tag="Salidas" Click="Nav_Click" 
+                                    ToolTip="Salida Mercancía" Height="50" Margin="5"
+                                    Background="#C0392B" Foreground="White" FontSize="20" BorderThickness="0">
+                                <Button.Resources>
+                                    <Style TargetType="Border">
+                                        <Setter Property="CornerRadius" Value="8"/>
+                                    </Style>
+                                </Button.Resources>
+                            </Button>
+                        </Grid>
+
+                        <!-- MÓDULO: ALMACÉN -->
+                        <TextBlock Text="CONFIGURACIÓN ALMACÉN" Style="{StaticResource MenuHeaderStyle}" x:Name="lblConfigHeader"/>
+
+                        <Button x:Name="btnProductos" Style="{StaticResource ModuleButtonStyle}" Tag="Productos" Click="Nav_Click">
+                            <TextBlock Text="🏷️"/>
+                            <!-- Icono Productos -->
+                        </Button>
+
+                        <Button x:Name="btnAreas" Style="{StaticResource ModuleButtonStyle}" Tag="Areas" Click="Nav_Click">
+                            <TextBlock Text="🏗️"/>
+                            <!-- Icono Areas -->
+                        </Button>
+
+                        <Button x:Name="btnCategorias" Style="{StaticResource ModuleButtonStyle}" Tag="Categorias" Click="Nav_Click">
+                            <TextBlock Text="📂"/>
+                            <!-- Icono Categorias -->
+                        </Button>
+
+                        <!-- MÓDULO: SEGURIDAD -->
+                        <TextBlock Text="ADMINISTRACIÓN" Style="{StaticResource MenuHeaderStyle}" x:Name="lblAdminHeader"/>
+
+                        <Button x:Name="btnUsuarios" Style="{StaticResource ModuleButtonStyle}" Tag="Usuarios" Click="Nav_Click" Background="#8E44AD">
+                            <TextBlock Text="👤"/>
+                            <!-- Icono Usuarios -->
+                        </Button>
+
+                    </StackPanel>
+                </ScrollViewer>
+
+                <!-- 3. FOOTER / SALIR -->
+                <Border Grid.Row="2" Background="#243342" Padding="15">
+                    <Grid>
+                        <Grid.ColumnDefinitions>
+                            <ColumnDefinition Width="*"/>
+                            <ColumnDefinition Width="Auto"/>
+                        </Grid.ColumnDefinitions>
+                        <StackPanel>
+                            <TextBlock Text="Sesión Activa" Foreground="Gray" FontSize="10"/>
+                            <TextBlock Text="{Binding Role, FallbackValue='Usuario'}" Foreground="White" FontWeight="Bold"/>
+                        </StackPanel>
+                        <Button Grid.Column="1" Content="⏻" Click="Salir_Click" 
+                                Width="30" Height="30" Background="Transparent" Foreground="#E74C3C" 
+                                BorderThickness="0" FontSize="18" ToolTip="Cerrar Sesión"/>
+                    </Grid>
+                </Border>
+            </Grid>
         </Border>
 
-        <Frame x:Name="MainContent" Grid.Column="1" NavigationUIVisibility="Hidden"/>
+        <!-- CONTENIDO PRINCIPAL -->
+        <Border Grid.Column="1" Background="White" Margin="0">
+            <Grid>
+                <Grid.RowDefinitions>
+                    <RowDefinition Height="Auto"/>
+                    <!-- Top Bar Decorativo -->
+                    <RowDefinition Height="*"/>
+                </Grid.RowDefinitions>
+
+                <!-- Barra superior sutil -->
+               
+
+                <Frame x:Name="MainContent" Grid.Row="1" NavigationUIVisibility="Hidden" Margin="20"/>
+            </Grid>
+        </Border>
     </Grid>
 </Window>

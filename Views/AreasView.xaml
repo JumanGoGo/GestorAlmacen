@@ -1,0 +1,93 @@
+﻿<UserControl x:Class="GestorAlmacen.Views.AreasView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
+             xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
+             mc:Ignorable="d" 
+             d:DesignHeight="500" d:DesignWidth="900" Background="White">
+
+    <Grid Margin="20">
+        <Grid.ColumnDefinitions>
+            <ColumnDefinition Width="2*"/>
+            <!-- Tabla -->
+            <ColumnDefinition Width="1*"/>
+            <!-- Formulario Lateral -->
+        </Grid.ColumnDefinitions>
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+        </Grid.RowDefinitions>
+
+        <!-- Título -->
+        <TextBlock Grid.ColumnSpan="2" Text="Configuración de Áreas y Pasillos" FontSize="22" FontWeight="Bold" Foreground="#333" Margin="0,0,0,20"/>
+
+        <!-- SECCIÓN IZQUIERDA: LISTADO -->
+        <Grid Grid.Row="1" Grid.Column="0" Margin="0,0,20,0">
+            <Grid.RowDefinitions>
+                <RowDefinition Height="Auto"/>
+                <RowDefinition Height="*"/>
+            </Grid.RowDefinitions>
+
+            <!-- Buscador -->
+            <StackPanel Orientation="Horizontal" Margin="0,0,0,10">
+                <TextBox x:Name="txtBuscar" Width="200" Padding="5" Tag="Buscar código..." TextChanged="txtBuscar_TextChanged"/>
+                <TextBlock Text="🔍" VerticalAlignment="Center" Margin="5,0,0,0"/>
+            </StackPanel>
+
+            <!-- Tabla -->
+            <DataGrid x:Name="dgAreas" Grid.Row="1" AutoGenerateColumns="False" IsReadOnly="True" 
+                      CanUserAddRows="False" SelectionMode="Single" BorderBrush="#DDD" BorderThickness="1"
+                      SelectionChanged="dgAreas_SelectionChanged">
+                <DataGrid.Columns>
+                    <DataGridTextColumn Header="Código" Binding="{Binding Codigo}" Width="80" FontWeight="Bold"/>
+                    <DataGridTextColumn Header="Nombre / Descripción" Binding="{Binding Nombre}" Width="*"/>
+                    <DataGridTextColumn Header="Capacidad" Binding="{Binding Capacidad}" Width="80"/>
+                    <DataGridTextColumn Header="Cat. Preferente" Binding="{Binding CategoriaPreferente}" Width="120"/>
+                    <DataGridTemplateColumn Header="Estado" Width="80">
+                        <DataGridTemplateColumn.CellTemplate>
+                            <DataTemplate>
+                                <TextBlock Text="{Binding IsActive}" ></TextBlock>
+                              
+                            </DataTemplate>
+                        </DataGridTemplateColumn.CellTemplate>
+                    </DataGridTemplateColumn>
+                </DataGrid.Columns>
+            </DataGrid>
+        </Grid>
+
+        <!-- SECCIÓN DERECHA: FORMULARIO RÁPIDO -->
+        <Border Grid.Row="1" Grid.Column="1" Background="#F9F9F9" BorderBrush="#EEE" BorderThickness="1" Padding="15" CornerRadius="5" VerticalAlignment="Top">
+            <StackPanel>
+                <TextBlock Text="Detalle del Área" FontWeight="Bold" FontSize="14" Margin="0,0,0,15"/>
+
+                <TextBlock Text="Código (Único): *" Margin="0,0,0,5"/>
+                <TextBox x:Name="txtCodigo" Padding="5" CharacterCasing="Upper" MaxLength="10" Margin="0,0,0,10"/>
+
+                <TextBlock Text="Nombre:" Margin="0,0,0,5"/>
+                <TextBox x:Name="txtNombre" Padding="5" Margin="0,0,0,10"/>
+
+                <TextBlock Text="Capacidad (Opcional):" Margin="0,0,0,5"/>
+                <TextBox x:Name="txtCapacidad" Padding="5" Margin="0,0,0,10"/>
+
+                <TextBlock Text="Categoría Preferente:" Margin="0,0,0,5"/>
+                <ComboBox x:Name="cmbCategoria" Padding="5" Margin="0,0,0,10" DisplayMemberPath="Nombre" SelectedValuePath="Id"/>
+                <TextBlock Text="* Si se asigna, el sistema alertará al colocar productos de otra categoría." 
+                           FontSize="10" Foreground="Gray" TextWrapping="Wrap" Margin="0,0,0,15"/>
+
+                <CheckBox x:Name="chkActivo" Content="Habilitada para almacenaje" IsChecked="True" Margin="0,0,0,20"/>
+
+                <!-- Botones Acción -->
+                <Grid>
+                    <Grid.ColumnDefinitions>
+                        <ColumnDefinition Width="*"/>
+                        <ColumnDefinition Width="*"/>
+                    </Grid.ColumnDefinitions>
+                    <Button x:Name="btnLimpiar" Content="Limpiar" Margin="0,0,5,0" Click="btnLimpiar_Click" Background="White"/>
+                    <Button x:Name="btnGuardar" Grid.Column="1" Content="Guardar" Background="#007ACC" Foreground="White" FontWeight="Bold" Click="btnGuardar_Click"/>
+                </Grid>
+
+                <Button x:Name="btnEliminar" Content="Inhabilitar Área" Background="#E74C3C" Foreground="White" Margin="0,10,0,0" Click="btnEliminar_Click" Visibility="Collapsed"/>
+            </StackPanel>
+        </Border>
+    </Grid>
+</UserControl>
