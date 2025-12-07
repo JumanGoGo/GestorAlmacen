@@ -1,93 +1,66 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
+using GestorAlmacen.Models;
 
 namespace GestorAlmacen.Views
 {
     public partial class UsuariosView : UserControl
     {
-        // Mock de datos
-        public class UsuarioMock
-        {
-            public int Id { get; set; }
-            public string Username { get; set; }
-            public string DisplayName { get; set; }
-            public string Role { get; set; } // ADMIN, SUPERVISOR, OPERADOR
-            public bool IsActive { get; set; }
-        }
-
-        private List<UsuarioMock> _listaUsuarios;
-        private UsuarioMock _seleccionado;
+        private User _seleccionado;
 
         public UsuariosView()
         {
             InitializeComponent();
-            CargarDatosPrueba();
+            CargarDatos();
         }
 
-        private void CargarDatosPrueba()
+        private void CargarDatos()
         {
-            _listaUsuarios = new List<UsuarioMock>
+            using (var db = new WMS_DBEntities())
             {
-                new UsuarioMock { Id=1, Username="admin", DisplayName="Administrador Principal", Role="ADMIN", IsActive=true },
-                new UsuarioMock { Id=2, Username="jperez", DisplayName="Juan Pérez", Role="SUPERVISOR", IsActive=true },
-                new UsuarioMock { Id=3, Username="operador1", DisplayName="Roberto Gómez", Role="OPERADOR", IsActive=true },
-                new UsuarioMock { Id=4, Username="invitado", DisplayName="Usuario Temporal", Role="OPERADOR", IsActive=false }
-            };
-            dgUsuarios.ItemsSource = _listaUsuarios;
+                dgUsuarios.ItemsSource = db.Users.OrderBy(u => u.username).ToList();
+            }
         }
-
-        // --- Eventos de UI ---
 
         private void dgUsuarios_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (dgUsuarios.SelectedItem is UsuarioMock user)
+            if (dgUsuarios.SelectedItem is User u)
             {
-                _seleccionado = user;
+                _seleccionado = u;
+                txtUsername.Text = u.username;
+                txtUsername.IsEnabled = false;
+                txtDisplayName.Text = u.display_name;
+                chkActivo.IsChecked = u.is_active;
 
-                txtUsername.Text = user.Username;
-                txtUsername.IsEnabled = false; // No permitimos cambiar el username para evitar conflictos
-                txtDisplayName.Text = user.DisplayName;
-                chkActivo.IsChecked = user.IsActive;
-
-                // Seleccionar Rol
+                // Seleccionar rol en combo
                 foreach (ComboBoxItem item in cmbRol.Items)
                 {
-                    if (item.Content.ToString() == user.Role)
+                    if (item.Content.ToString() == u.role)
                     {
                         cmbRol.SelectedItem = item;
                         break;
                     }
                 }
 
-                // Manejo visual de contraseña en edición
                 txtPassword.Password = "";
-                lblPasswordHint.Visibility = Visibility.Visible; // "Dejar vacío para no cambiar"
-
-                btnGuardar.Content = "Actualizar Datos";
+                lblPasswordHint.Visibility = Visibility.Visible;
+                btnGuardar.Content = "Actualizar";
                 btnEliminar.Visibility = Visibility.Visible;
             }
         }
 
-        private void btnLimpiar_Click(object sender, RoutedEventArgs e)
-        {
-            LimpiarFormulario();
-        }
+        private void btnLimpiar_Click(object sender, RoutedEventArgs e) => Limpiar();
 
-        private void LimpiarFormulario()
+        private void Limpiar()
         {
             _seleccionado = null;
-            txtUsername.Text = "";
-            txtUsername.IsEnabled = true;
-            txtDisplayName.Text = "";
-            txtPassword.Password = "";
+            txtUsername.Text = ""; txtUsername.IsEnabled = true;
+            txtDisplayName.Text = ""; txtPassword.Password = "";
             cmbRol.SelectedIndex = -1;
             chkActivo.IsChecked = true;
-
-            lblPasswordHint.Visibility = Visibility.Collapsed; // Ocultar hint en modo nuevo
-
+            lblPasswordHint.Visibility = Visibility.Collapsed;
             dgUsuarios.SelectedItem = null;
             btnGuardar.Content = "Crear Usuario";
             btnEliminar.Visibility = Visibility.Collapsed;
@@ -95,68 +68,64 @@ namespace GestorAlmacen.Views
 
         private void btnGuardar_Click(object sender, RoutedEventArgs e)
         {
-            // Validaciones
-            if (string.IsNullOrWhiteSpace(txtUsername.Text) || string.IsNullOrWhiteSpace(txtDisplayName.Text))
-            {
-                MessageBox.Show("Usuario y Nombre son obligatorios.");
-                return;
-            }
+            if (string.IsNullOrWhiteSpace(txtUsername.Text)) return;
+            if (cmbRol.SelectedItem == null) return;
 
-            if (cmbRol.SelectedItem == null)
+            using (var db = new WMS_DBEntities())
             {
-                MessageBox.Show("Debe asignar un Rol.");
-                return;
-            }
+                string rol = ((ComboBoxItem)cmbRol.SelectedItem).Content.ToString();
 
-            // Validación especial de Password
-            if (_seleccionado == null && string.IsNullOrWhiteSpace(txtPassword.Password))
-            {
-                MessageBox.Show("Debe asignar una contraseña para el nuevo usuario.");
-                return;
-            }
+                if (_seleccionado == null)
+                {
+                    if (string.IsNullOrWhiteSpace(txtPassword.Password))
+                    {
+                        MessageBox.Show("Contraseña requerida."); return;
+                    }
 
-            string rolSeleccionado = ((ComboBoxItem)cmbRol.SelectedItem).Content.ToString();
+                    var nuevo = new User
+                    {
+                        username = txtUsername.Text.Trim(),
+                        password_hash = txtPassword.Password, // Texto plano por ahora
+                        display_name = txtDisplayName.Text.Trim(),
+                        role = rol,
+                        is_active = true,
+                        created_at = DateTime.Now
+                    };
+                    db.Users.Add(nuevo);
+                }
+                else
+                {
+                    var edit = db.Users.Find(_seleccionado.user_id);
+                    edit.display_name = txtDisplayName.Text;
+                    edit.role = rol;
+                    edit.is_active = (bool)chkActivo.IsChecked;
 
-            if (_seleccionado == null)
-            {
-                // INSERT
-                MessageBox.Show($"Usuario '{txtUsername.Text}' ({rolSeleccionado}) creado con éxito.");
-            }
-            else
-            {
-                // UPDATE
-                string msgPass = string.IsNullOrEmpty(txtPassword.Password) ? "sin cambiar contraseña" : "y nueva contraseña establecida";
-                MessageBox.Show($"Usuario '{txtUsername.Text}' actualizado {msgPass}.");
-            }
+                    // Solo actualizamos pass si escribió algo nuevo
+                    if (!string.IsNullOrEmpty(txtPassword.Password))
+                        edit.password_hash = txtPassword.Password;
+                }
 
-            LimpiarFormulario();
+                try { db.SaveChanges(); Limpiar(); CargarDatos(); }
+                catch (Exception ex) { MessageBox.Show("Error: " + ex.Message); }
+            }
         }
 
+        // btnEliminar_Click y txtBuscar_TextChanged similar a los anteriores...
         private void btnEliminar_Click(object sender, RoutedEventArgs e)
         {
-            if (_seleccionado != null)
+            if (_seleccionado == null) return;
+            if (MessageBox.Show("¿Bloquear acceso a usuario?", "Confirmar", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
             {
-                var result = MessageBox.Show($"¿Inhabilitar el acceso a '{_seleccionado.Username}'?",
-                                             "Confirmar Bloqueo", MessageBoxButton.YesNo, MessageBoxImage.Warning);
-
-                if (result == MessageBoxResult.Yes)
+                using (var db = new WMS_DBEntities())
                 {
-                    // Lógica SQL: UPDATE Users SET is_active = 0 WHERE user_id = ...
-                    MessageBox.Show("Usuario inhabilitado.");
-                    LimpiarFormulario();
+                    var u = db.Users.Find(_seleccionado.user_id);
+                    u.is_active = false;
+                    db.SaveChanges();
+                    Limpiar();
+                    CargarDatos();
                 }
             }
         }
-
-        private void txtBuscar_TextChanged(object sender, TextChangedEventArgs e)
-        {
-            string query = txtBuscar.Text.ToLower();
-            if (_listaUsuarios != null)
-            {
-                var filtrado = _listaUsuarios.Where(x => x.Username.ToLower().Contains(query) ||
-                                                         x.DisplayName.ToLower().Contains(query)).ToList();
-                dgUsuarios.ItemsSource = filtrado;
-            }
-        }
+        private void txtBuscar_TextChanged(object sender, TextChangedEventArgs e) { }
     }
 }

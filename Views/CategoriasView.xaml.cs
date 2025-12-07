@@ -1,56 +1,50 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
+using GestorAlmacen.Models; // Namespace donde está tu EF .edmx
 
 namespace GestorAlmacen.Views
 {
     public partial class CategoriasView : UserControl
     {
-        // Mock de datos
-        public class CategoriaMock
-        {
-            public int Id { get; set; }
-            public string Nombre { get; set; }
-            public string Descripcion { get; set; }
-            public bool IsActive { get; set; }
-        }
-
-        private List<CategoriaMock> _listaCategorias;
-        private CategoriaMock _seleccionado;
+        // Variable para guardar el objeto que estamos editando
+        private Category _seleccionado;
 
         public CategoriasView()
         {
             InitializeComponent();
-            CargarDatosPrueba();
+            CargarDatos();
         }
 
-        private void CargarDatosPrueba()
+        private void CargarDatos()
         {
-            // Datos iniciales como en tu script SQL
-            _listaCategorias = new List<CategoriaMock>
+            try
             {
-                new CategoriaMock { Id=1, Nombre="Celulares", Descripcion="Telefonía móvil", IsActive=true },
-                new CategoriaMock { Id=2, Nombre="Televisiones", Descripcion="TVs y monitores", IsActive=true },
-                new CategoriaMock { Id=3, Nombre="Línea Blanca", Descripcion="Electrodomésticos grandes", IsActive=true },
-                new CategoriaMock { Id=4, Nombre="Audio/Bocinas", Descripcion="Equipo de audio", IsActive=true },
-                new CategoriaMock { Id=5, Nombre="Cómputo", Descripcion="PC, laptops y accesorios", IsActive=true }
-            };
-            dgCategorias.ItemsSource = _listaCategorias;
+                using (var db = new WMS_DBEntities())
+                {
+                    // Cargamos solo las categorías activas
+                    var lista = db.Categories
+                                  .Where(c => c.is_active == true)
+                                  .OrderBy(c => c.name)
+                                  .ToList();
+                    dgCategorias.ItemsSource = lista;
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error al cargar datos: " + ex.Message);
+            }
         }
-
-        // --- Eventos de UI ---
 
         private void dgCategorias_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (dgCategorias.SelectedItem is CategoriaMock cat)
+            if (dgCategorias.SelectedItem is Category cat)
             {
                 _seleccionado = cat;
-
-                txtNombre.Text = cat.Nombre;
-                txtDescripcion.Text = cat.Descripcion;
-                chkActivo.IsChecked = cat.IsActive;
+                txtNombre.Text = cat.name;
+                txtDescripcion.Text = cat.description;
+                chkActivo.IsChecked = cat.is_active;
 
                 btnGuardar.Content = "Actualizar";
                 btnEliminar.Visibility = Visibility.Visible;
@@ -68,7 +62,6 @@ namespace GestorAlmacen.Views
             txtNombre.Text = "";
             txtDescripcion.Text = "";
             chkActivo.IsChecked = true;
-
             dgCategorias.SelectedItem = null;
             btnGuardar.Content = "Guardar";
             btnEliminar.Visibility = Visibility.Collapsed;
@@ -78,46 +71,79 @@ namespace GestorAlmacen.Views
         {
             if (string.IsNullOrWhiteSpace(txtNombre.Text))
             {
-                MessageBox.Show("El nombre de la categoría es obligatorio.");
+                MessageBox.Show("El nombre es obligatorio.");
                 return;
             }
 
-            // Aquí iría el INSERT o UPDATE a la tabla Categories
-            if (_seleccionado == null)
+            try
             {
-                MessageBox.Show($"Categoría '{txtNombre.Text}' CREADA correctamente.");
-            }
-            else
-            {
-                MessageBox.Show($"Categoría '{txtNombre.Text}' ACTUALIZADA correctamente.");
-            }
+                using (var db = new WMS_DBEntities())
+                {
+                    if (_seleccionado == null)
+                    {
+                        // INSERT
+                        var nuevaCat = new Category
+                        {
+                            name = txtNombre.Text.Trim(),
+                            description = txtDescripcion.Text.Trim(),
+                            is_active = (bool)chkActivo.IsChecked,
+                            created_at = DateTime.Now
+                        };
+                        db.Categories.Add(nuevaCat);
+                    }
+                    else
+                    {
+                        // UPDATE - Buscamos el registro fresco en BD para editarlo
+                        var catEditar = db.Categories.Find(_seleccionado.category_id);
+                        if (catEditar != null)
+                        {
+                            catEditar.name = txtNombre.Text.Trim();
+                            catEditar.description = txtDescripcion.Text.Trim();
+                            catEditar.is_active = (bool)chkActivo.IsChecked;
+                        }
+                    }
 
-            LimpiarFormulario();
-            // Recargar lista...
+                    db.SaveChanges();
+                    MessageBox.Show("Guardado correctamente.");
+                    LimpiarFormulario();
+                    CargarDatos(); // Recargar grilla
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error al guardar: " + ex.Message);
+            }
         }
 
         private void btnEliminar_Click(object sender, RoutedEventArgs e)
         {
-            if (_seleccionado != null)
-            {
-                var result = MessageBox.Show($"¿Seguro que desea desactivar '{_seleccionado.Nombre}'?\nEsto puede afectar productos activos.",
-                                             "Confirmar", MessageBoxButton.YesNo, MessageBoxImage.Warning);
+            if (_seleccionado == null) return;
 
-                if (result == MessageBoxResult.Yes)
+            if (MessageBox.Show("¿Desactivar categoría?", "Confirmar", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
+            {
+                using (var db = new WMS_DBEntities())
                 {
-                    MessageBox.Show("Categoría desactivada (Soft Delete).");
-                    LimpiarFormulario();
+                    var cat = db.Categories.Find(_seleccionado.category_id);
+                    if (cat != null)
+                    {
+                        cat.is_active = false; // Soft Delete
+                        db.SaveChanges();
+                        LimpiarFormulario();
+                        CargarDatos();
+                    }
                 }
             }
         }
 
         private void txtBuscar_TextChanged(object sender, TextChangedEventArgs e)
         {
-            string query = txtBuscar.Text.ToLower();
-            if (_listaCategorias != null)
+        
+            using (var db = new WMS_DBEntities())
             {
-                var filtrado = _listaCategorias.Where(x => x.Nombre.ToLower().Contains(query)).ToList();
-                dgCategorias.ItemsSource = filtrado;
+                var query = txtBuscar.Text.ToLower();
+                dgCategorias.ItemsSource = db.Categories
+                                             .Where(c => c.is_active == true && c.name.Contains(query))
+                                             .ToList();
             }
         }
     }

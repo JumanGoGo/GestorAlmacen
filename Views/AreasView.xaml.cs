@@ -1,86 +1,63 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using GestorAlmacen.Models;
+using System;
 using System.Linq;
+using System.Security.Cryptography;
 using System.Windows;
 using System.Windows.Controls;
+// Agrega: using System.Data.Entity; si necesitas .Include, pero aqui usaremos carga lazy o directa
 
 namespace GestorAlmacen.Views
 {
     public partial class AreasView : UserControl
     {
-        // Mock de datos
-        public class AreaMock
-        {
-            public int Id { get; set; }
-            public string Codigo { get; set; }
-            public string Nombre { get; set; }
-            public int? Capacidad { get; set; }
-            public string CategoriaPreferente { get; set; }
-            public bool IsActive { get; set; }
-        }
-
-        public class CategoriaSimpleMock { public int Id { get; set; } public string Nombre { get; set; } }
-
-        private List<AreaMock> _listaAreas;
-        private AreaMock _seleccionado; // Para saber si estamos editando
+        private Area _seleccionado;
 
         public AreasView()
         {
             InitializeComponent();
-            CargarCategorias();
-            CargarDatosPrueba();
+            CargarListas(); // Cargar combo
+            CargarDatos();  // Cargar grid
         }
 
-        private void CargarDatosPrueba()
+        private void CargarListas()
         {
-            _listaAreas = new List<AreaMock>
+            using (var db = new WMS_DBEntities())
             {
-                new AreaMock { Id=1, Codigo="A1", Nombre="Pasillo A - Sección 1", Capacidad=100, CategoriaPreferente="Celulares", IsActive=true },
-                new AreaMock { Id=2, Codigo="A2", Nombre="Pasillo A - Sección 2", Capacidad=100, CategoriaPreferente="Celulares", IsActive=true },
-                new AreaMock { Id=3, Codigo="B1", Nombre="Zona Carga Pesada", Capacidad=50, CategoriaPreferente="Línea Blanca", IsActive=true },
-                new AreaMock { Id=4, Codigo="Z9", Nombre="Área Cuarentena", Capacidad=null, CategoriaPreferente="Sin Asignar", IsActive=false }
-            };
-            dgAreas.ItemsSource = _listaAreas;
+                var cats = db.Categories.Where(c => c.is_active == true).ToList();
+                // Agregamos opción vacía al principio si quieres, o manejamos null
+                cmbCategoria.ItemsSource = cats;
+            }
         }
 
-        private void CargarCategorias()
+        private void CargarDatos()
         {
-            // Llenar combo para 'Preferred Category'
-            var cats = new List<CategoriaSimpleMock>
+            using (var db = new WMS_DBEntities())
             {
-                new CategoriaSimpleMock { Id=0, Nombre="-- Ninguna --" },
-                new CategoriaSimpleMock { Id=1, Nombre="Celulares" },
-                new CategoriaSimpleMock { Id=2, Nombre="Línea Blanca" },
-                new CategoriaSimpleMock { Id=3, Nombre="Cómputo" }
-            };
-            cmbCategoria.ItemsSource = cats;
-            cmbCategoria.SelectedIndex = 0;
+                // Incluimos la relación con Categories para mostrar el nombre en el Grid
+                // Nota: Asegúrate que tu Grid en XAML haga Binding a 'Categories.name' en la columna correspondiente
+                var lista = db.Areas.Include("Category").Where(a => a.is_active == true).ToList();
+                dgAreas.ItemsSource = lista;
+            }
         }
 
-        // --- Eventos de UI ---
+        // IMPORTANTE: En tu XAML (AreasView.xaml), busca la columna de 'Cat. Preferente' 
+        // y cambia el Binding="{Binding CategoriaPreferente}" por Binding="{Binding Categories.name}"
 
         private void dgAreas_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
-            if (dgAreas.SelectedItem is AreaMock area)
+            if (dgAreas.SelectedItem is Area area)
             {
-                // MODO EDICIÓN: Pasar datos al formulario
                 _seleccionado = area;
+                txtCodigo.Text = area.code;
+                txtCodigo.IsEnabled = false; // Código inmutable
+                txtNombre.Text = area.name;
+                txtCapacidad.Text = area.capacity.ToString();
+                chkActivo.IsChecked = area.is_active;
 
-                txtCodigo.Text = area.Codigo;
-                txtCodigo.IsEnabled = false; // El código no suele editarse por integridad
-                txtNombre.Text = area.Nombre;
-                txtCapacidad.Text = area.Capacidad?.ToString() ?? "";
-                chkActivo.IsChecked = area.IsActive;
-
-                // Seleccionar la categoría en el combo (Lógica simple por nombre para el Mock)
-                foreach (CategoriaSimpleMock item in cmbCategoria.Items)
-                {
-                    if (item.Nombre == area.CategoriaPreferente)
-                    {
-                        cmbCategoria.SelectedItem = item;
-                        break;
-                    }
-                }
+                if (area.preferred_category_id != null)
+                    cmbCategoria.SelectedValue = area.preferred_category_id;
+                else
+                    cmbCategoria.SelectedIndex = -1;
 
                 btnGuardar.Content = "Actualizar";
                 btnEliminar.Visibility = Visibility.Visible;
@@ -89,19 +66,18 @@ namespace GestorAlmacen.Views
 
         private void btnLimpiar_Click(object sender, RoutedEventArgs e)
         {
-            LimpiarFormulario();
+            Limpiar();
         }
 
-        private void LimpiarFormulario()
+        private void Limpiar()
         {
             _seleccionado = null;
             txtCodigo.Text = "";
             txtCodigo.IsEnabled = true;
             txtNombre.Text = "";
             txtCapacidad.Text = "";
-            cmbCategoria.SelectedIndex = 0;
+            cmbCategoria.SelectedIndex = -1;
             chkActivo.IsChecked = true;
-
             dgAreas.SelectedItem = null;
             btnGuardar.Content = "Guardar";
             btnEliminar.Visibility = Visibility.Collapsed;
@@ -109,39 +85,65 @@ namespace GestorAlmacen.Views
 
         private void btnGuardar_Click(object sender, RoutedEventArgs e)
         {
-            // Validaciones básicas
-            if (string.IsNullOrWhiteSpace(txtCodigo.Text))
+            if (string.IsNullOrWhiteSpace(txtCodigo.Text)) return;
+
+            using (var db = new WMS_DBEntities())
             {
-                MessageBox.Show("El código es obligatorio.");
-                return;
+                int? catId = cmbCategoria.SelectedValue as int?;
+                int.TryParse(txtCapacidad.Text, out int cap);
+
+                if (_seleccionado == null)
+                {
+                    var nueva = new Area
+                    {
+                        code = txtCodigo.Text.Trim().ToUpper(),
+                        name = txtNombre.Text.Trim(),
+                        capacity = cap > 0 ? (int?)cap : null,
+                        preferred_category_id = catId,
+                        is_active = true,
+                        created_at = DateTime.Now
+                    };
+                    db.Areas.Add(nueva);
+                }
+                else
+                {
+                    var edit = db.Areas.Find(_seleccionado.area_id);
+                    edit.name = txtNombre.Text;
+                    edit.capacity = cap > 0 ? (int?)cap : null;
+                    edit.preferred_category_id = catId;
+                    edit.is_active = (bool)chkActivo.IsChecked;
+                }
+
+                try
+                {
+                    db.SaveChanges();
+                    Limpiar();
+                    CargarDatos();
+                }
+                catch (Exception ex) { MessageBox.Show("Error (posible código duplicado): " + ex.Message); }
             }
-
-            // Aquí iría la lógica INSERT o UPDATE a SQL Server
-            string mensaje = (_seleccionado == null) ? "Área Creada" : "Área Actualizada";
-            MessageBox.Show($"{mensaje} correctamente.\n(Simulado)");
-
-            LimpiarFormulario();
         }
 
+        // ... (Implementar btnEliminar y txtBuscar igual que en CategoriasView)
         private void btnEliminar_Click(object sender, RoutedEventArgs e)
         {
-            if (_seleccionado != null)
+            if (_seleccionado == null) return;
+            if (MessageBox.Show("¿Desactivar Área?", "Confirmar", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
             {
-                MessageBox.Show($"El área {_seleccionado.Codigo} ha sido inhabilitada (Soft Delete).");
-                // _seleccionado.IsActive = false; // Guardar en BD
-                LimpiarFormulario();
+                using (var db = new WMS_DBEntities())
+                {
+                    var a = db.Areas.Find(_seleccionado.area_id);
+                    a.is_active = false;
+                    db.SaveChanges();
+                    Limpiar();
+                    CargarDatos();
+                }
             }
         }
 
         private void txtBuscar_TextChanged(object sender, TextChangedEventArgs e)
         {
-            // Filtro simple
-            string query = txtBuscar.Text.ToLower();
-            if (_listaAreas != null)
-            {
-                var filtrado = _listaAreas.Where(x => x.Codigo.ToLower().Contains(query) || x.Nombre.ToLower().Contains(query)).ToList();
-                dgAreas.ItemsSource = filtrado;
-            }
+            // Lógica de filtro opcional
         }
     }
 }

@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="utf-8"?>
+<edmx:Edmx Version="3.0" xmlns:edmx="http://schemas.microsoft.com/ado/2009/11/edmx">
+ <!-- EF Designer content (DO NOT EDIT MANUALLY BELOW HERE) -->
+  <edmx:Designer xmlns="http://schemas.microsoft.com/ado/2009/11/edmx">
+    <!-- Diagram content (shape and connector positions) -->
+    <edmx:Diagrams>
+      <Diagram DiagramId="f2ed4c966ed4444c9cd2e2c680586026" Name="Diagram1" ZoomLevel="52">
+        <EntityTypeShape EntityType="WMS_DBModel.Area" Width="1.5" PointX="3" PointY="4.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="WMS_DBModel.AuditLog" Width="1.5" PointX="5.75" PointY="2.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="WMS_DBModel.Category" Width="1.5" PointX="0.75" PointY="7" IsExpanded="true" />
+        <EntityTypeShape EntityType="WMS_DBModel.MovementDetail" Width="1.5" PointX="5.25" PointY="6.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="WMS_DBModel.Movement" Width="1.5" PointX="3" PointY="0.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="WMS_DBModel.Product" Width="1.5" PointX="3" PointY="8.5" IsExpanded="true" />
+        <EntityTypeShape EntityType="WMS_DBModel.Sequence" Width="1.5" PointX="7.75" PointY="2.75" IsExpanded="true" />
+        <EntityTypeShape EntityType="WMS_DBModel.Stock" Width="1.5" PointX="8.25" PointY="7" IsExpanded="true" />
+        <EntityTypeShape EntityType="WMS_DBModel.User" Width="1.5" PointX="0.75" PointY="3.375" IsExpanded="true" />
+        <AssociationConnector Association="WMS_DBModel.FK_Areas_Categories" ManuallyRouted="false" />
+        <AssociationConnector Association="WMS_DBModel.FK_MovDet_Area" ManuallyRouted="false" />
+        <AssociationConnector Association="WMS_DBModel.FK_Stock_Area" ManuallyRouted="false" />
+        <AssociationConnector Association="WMS_DBModel.FK_Products_Categories" ManuallyRouted="false" />
+        <AssociationConnector Association="WMS_DBModel.FK_MovDet_Mov" ManuallyRouted="false" />
+        <AssociationConnector Association="WMS_DBModel.FK_MovDet_Prod" ManuallyRouted="false" />
+        <AssociationConnector Association="WMS_DBModel.FK_Movements_User" ManuallyRouted="false" />
+        <AssociationConnector Association="WMS_DBModel.FK_Stock_Product" ManuallyRouted="false" />
+      </Diagram>
+    </edmx:Diagrams>
+  </edmx:Designer>
+</edmx:Edmx>

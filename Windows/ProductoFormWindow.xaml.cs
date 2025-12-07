@@ -1,87 +1,98 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.Text.RegularExpressions; // Necesario para validar SKU
+using System.Linq;
+using System.Text.RegularExpressions;
 using System.Windows;
+using GestorAlmacen.Models;
 
-namespace GestorAlmacen.Views.Windows // Asegúrate que coincida con tu carpeta
+namespace GestorAlmacen.Views.Windows
 {
     public partial class ProductoFormWindow : Window
     {
-        // Mock para llenar el combo (luego vendrá de BD)
-        public class CategoriaMock
-        {
-            public int Id { get; set; }
-            public string Nombre { get; set; }
-        }
+        private int? _productoId; // Si es null, es nuevo. Si tiene valor, es edición.
 
-        public ProductoFormWindow()
+        public ProductoFormWindow(int? idProducto)
         {
             InitializeComponent();
-            CargarCategorias();
+            _productoId = idProducto;
+            CargarCombos();
+
+            if (_productoId.HasValue)
+                CargarDatosProducto(_productoId.Value);
         }
 
-        private void CargarCategorias()
+        private void CargarCombos()
         {
-            // Simulamos datos de la tabla Categories
-            List<CategoriaMock> categorias = new List<CategoriaMock>
+            using (var db = new WMS_DBEntities())
             {
-                new CategoriaMock { Id = 1, Nombre = "Celulares" },
-                new CategoriaMock { Id = 2, Nombre = "Televisiones" },
-                new CategoriaMock { Id = 3, Nombre = "Línea Blanca" },
-                new CategoriaMock { Id = 4, Nombre = "Audio/Bocinas" },
-                new CategoriaMock { Id = 5, Nombre = "Cómputo" }
-            };
-
-            cmbCategoria.ItemsSource = categorias;
+                cmbCategoria.ItemsSource = db.Categories.Where(c => c.is_active == true).ToList();
+            }
         }
 
-        private void btnCancelar_Click(object sender, RoutedEventArgs e)
+        private void CargarDatosProducto(int id)
         {
-            this.DialogResult = false;
-            this.Close();
+            using (var db = new WMS_DBEntities())
+            {
+                var prod = db.Products.Find(id);
+                if (prod != null)
+                {
+                    txtSku.Text = prod.sku;
+                    txtSku.IsEnabled = false; // SKU no editable
+                    txtNombre.Text = prod.name;
+                    cmbCategoria.SelectedValue = prod.category_id;
+                    chkActivo.IsChecked = prod.is_active;
+                    // ... mapear otros campos
+                }
+            }
         }
 
         private void btnGuardar_Click(object sender, RoutedEventArgs e)
         {
-            // --- VALIDACIONES (Reglas de Negocio) ---
-
-            // 1. Validar SKU Formato (AAA-000)
-            string sku = txtSku.Text.Trim();
-            string skuPattern = @"^[A-Z]{3}-\d{3}$"; // 3 Letras, guion, 3 numeros
-
-            if (!Regex.IsMatch(sku, skuPattern))
+            // Validaciones Regex SKU ... (Mantener las que ya tenías)
+            string skuPattern = @"^[A-Z]{3}-\d{3}$";
+            if (!Regex.IsMatch(txtSku.Text, skuPattern))
             {
-                MessageBox.Show("El SKU debe tener el formato AAA-000 (Ej: CEL-123).\nTres letras mayúsculas, un guion y tres dígitos.",
-                                "Error de Formato", MessageBoxButton.OK, MessageBoxImage.Warning);
+                MessageBox.Show("Formato SKU inválido."); return;
+            }
+
+            if (cmbCategoria.SelectedValue == null)
+            {
+                MessageBox.Show("Debe seleccionar una categoría obligatoriamente.");
                 return;
             }
 
-            // 2. Validar Nombre
-            if (string.IsNullOrWhiteSpace(txtNombre.Text))
+            using (var db = new WMS_DBEntities())
             {
-                MessageBox.Show("El nombre del producto es obligatorio.", "Faltan datos", MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
+                if (!_productoId.HasValue) // NUEVO
+                {
+                    // Validar unicidad SKU
+                    if (db.Products.Any(p => p.sku == txtSku.Text))
+                    {
+                        MessageBox.Show("El SKU ya existe."); return;
+                    }
+
+                    var nuevo = new Product
+                    {
+                        sku = txtSku.Text,
+                        name = txtNombre.Text,
+                        category_id = (int)cmbCategoria.SelectedValue,
+                        is_active = (bool)chkActivo.IsChecked,
+                        created_at = DateTime.Now
+                    };
+                    db.Products.Add(nuevo);
+                }
+                else // EDITAR
+                {
+                    var edit = db.Products.Find(_productoId.Value);
+                    edit.name = txtNombre.Text;
+                    edit.category_id = (int)cmbCategoria.SelectedValue;
+                    edit.is_active = (bool)chkActivo.IsChecked;
+                }
+
+                db.SaveChanges();
+                this.DialogResult = true; // Éxito
             }
-
-            // 3. Validar Categoría
-            if (cmbCategoria.SelectedItem == null)
-            {
-                MessageBox.Show("Debe seleccionar una categoría.", "Faltan datos", MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
-            }
-
-            // 4. Validar Reorden (Debe ser numérico)
-            if (!string.IsNullOrEmpty(txtReorden.Text) && !int.TryParse(txtReorden.Text, out _))
-            {
-                MessageBox.Show("El punto de reorden debe ser un número entero.", "Error de Formato", MessageBoxButton.OK, MessageBoxImage.Warning);
-                return;
-            }
-
-            // SI TODO ESTA BIEN:
-            MessageBox.Show("¡Producto validado correctamente! \n(Aquí se guardaría en SQL)", "Éxito", MessageBoxButton.OK, MessageBoxImage.Information);
-
-            this.DialogResult = true; // Cierra la ventana devolviendo 'True'
-            this.Close();
         }
+
+        private void btnCancelar_Click(object sender, RoutedEventArgs e) => this.Close();
     }
 }

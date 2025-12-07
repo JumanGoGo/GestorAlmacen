@@ -1,82 +1,47 @@
-﻿using System.Collections.Generic;
+﻿using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
+using GestorAlmacen.Models;
 
 namespace GestorAlmacen.Views
 {
     public partial class ProductosView : UserControl
     {
-        // Esta clase interna simula tu Modelo final. 
-        // Cuando conectemos la BD, borraremos esto y usaremos GestorAlmacen.Models.Producto
-        public class ProductoMock
-        {
-            public int Id { get; set; }
-            public string Sku { get; set; }
-            public string Nombre { get; set; }
-            public string Categoria { get; set; }
-            public int StockTotal { get; set; }
-            public bool IsActive { get; set; }
-        }
-
         public ProductosView()
         {
             InitializeComponent();
-            CargarDatosPrueba();
+            CargarProductos();
         }
 
-        private void CargarDatosPrueba()
+        private void CargarProductos()
         {
-            // Simulamos datos que vendrían de SQL Server
-            List<ProductoMock> lista = new List<ProductoMock>
+            using (var db = new WMS_DBEntities())
             {
-                new ProductoMock { Id=1, Sku="CEL-001", Nombre="iPhone 15 Pro", Categoria="Celulares", StockTotal=50, IsActive=true },
-                new ProductoMock { Id=2, Sku="TV-002", Nombre="Samsung 55' 4K", Categoria="Televisiones", StockTotal=12, IsActive=true },
-                new ProductoMock { Id=3, Sku="LBL-003", Nombre="Refrigerador LG", Categoria="Línea Blanca", StockTotal=5, IsActive=true },
-                new ProductoMock { Id=4, Sku="AUD-004", Nombre="Bocina Bose", Categoria="Audio", StockTotal=20, IsActive=false }, // Inactivo
-            };
+                // Traemos los productos e incluimos la Categoría para mostrar el nombre
+                var lista = db.Products.Include("Category").ToList();
 
-            dgProductos.ItemsSource = lista;
-        }
-
-        private void btnBuscar_Click(object sender, RoutedEventArgs e)
-        {
-            MessageBox.Show($"Buscando: {txtBuscar.Text} (Lógica pendiente)");
+                // NOTA: Asegúrate de que en el XAML el DataGrid binding de categoría sea: Binding="{Binding Categories.name}"
+                dgProductos.ItemsSource = lista;
+            }
         }
 
         private void btnNuevo_Click(object sender, RoutedEventArgs e)
         {
-            // Instanciamos la ventana modal (Asegúrate de importar el namespace de Windows)
-            var form = new GestorAlmacen.Views.Windows.ProductoFormWindow();
-
-            // ShowDialog detiene la ejecución aquí hasta que el usuario cierre la ventana
-            bool? resultado = form.ShowDialog();
-
-            if (resultado == true)
-            {
-                // El usuario dio click en "Guardar" y pasó las validaciones
-                MessageBox.Show("Refrescando lista de productos...");
-                // Aquí llamaríamos de nuevo a CargarDatosPrueba() o CargarDesdeBD()
-            }
+            var win = new Windows.ProductoFormWindow(null); // null = Nuevo
+            if (win.ShowDialog() == true) CargarProductos();
         }
 
         private void btnEditar_Click(object sender, RoutedEventArgs e)
         {
-            // Validar que haya algo seleccionado
-            if (dgProductos.SelectedItem == null)
+            if (dgProductos.SelectedItem is Product prod)
             {
-                MessageBox.Show("Seleccione un producto para editar.");
-                return;
+                var win = new Windows.ProductoFormWindow(prod.product_id); // Pasamos ID
+                if (win.ShowDialog() == true) CargarProductos();
             }
-
-            // Obtener el objeto seleccionado
-            ProductoMock seleccionado = (ProductoMock)dgProductos.SelectedItem;
-            MessageBox.Show($"Editando SKU: {seleccionado.Sku}");
         }
 
-        private void btnEliminar_Click(object sender, RoutedEventArgs e)
-        {
-            if (dgProductos.SelectedItem == null) return;
-            MessageBox.Show("Lógica de Soft Delete (IsActive = false)");
-        }
+        // ... Implementa Delete y Buscar de forma similar a Categorías ...
+        private void btnEliminar_Click(object sender, RoutedEventArgs e) { } // Pendiente implementar soft delete
+        private void btnBuscar_Click(object sender, RoutedEventArgs e) { }
     }
 }
