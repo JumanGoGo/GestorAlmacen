@@ -39,18 +39,33 @@
                       CanUserAddRows="False" SelectionMode="Single" BorderBrush="#DDD" BorderThickness="1"
                       SelectionChanged="dgAreas_SelectionChanged">
                 <DataGrid.Columns>
-                    <DataGridTextColumn Header="Código" Binding="{Binding Codigo}" Width="80" FontWeight="Bold"/>
-                    <DataGridTextColumn Header="Nombre / Descripción" Binding="{Binding Nombre}" Width="*"/>
-                    <DataGridTextColumn Header="Capacidad" Binding="{Binding Capacidad}" Width="80"/>
-                    <DataGridTextColumn Header="Cat. Preferente" Binding="{Binding CategoriaPreferente}" Width="120"/>
-                    <DataGridTemplateColumn Header="Estado" Width="80">
-                        <DataGridTemplateColumn.CellTemplate>
-                            <DataTemplate>
-                                <TextBlock Text="{Binding IsActive}" ></TextBlock>
-                              
-                            </DataTemplate>
-                        </DataGridTemplateColumn.CellTemplate>
-                    </DataGridTemplateColumn>
+                    <DataGridTextColumn Header="Código" Binding="{Binding code}" Width="80" FontWeight="Bold"/>
+                    <DataGridTextColumn Header="Nombre / Descripción" Binding="{Binding name}" Width="*"/>
+                    <DataGridTextColumn Header="Capacidad" Binding="{Binding capacity}" Width="80"/>
+					<DataGridTextColumn Header="Cat. Preferente" Binding="{Binding Category.name}" Width="120"/>
+					<DataGridTemplateColumn Header="Estado" Width="80">
+						<DataGridTemplateColumn.CellTemplate>
+							<DataTemplate>
+								<StackPanel HorizontalAlignment="Center">
+									<TextBlock FontSize="12" FontWeight="Bold">
+										<TextBlock.Style>
+											<Style TargetType="TextBlock">
+												<Setter Property="Text" Value="INACTIVA"/>
+												<Setter Property="Foreground" Value="Red"/>
+
+												<Style.Triggers>
+													<DataTrigger Binding="{Binding is_active}" Value="True">
+														<Setter Property="Text" Value="ACTIVA"/>
+														<Setter Property="Foreground" Value="Green"/>
+													</DataTrigger>
+												</Style.Triggers>
+											</Style>
+										</TextBlock.Style>
+									</TextBlock>
+								</StackPanel>
+							</DataTemplate>
+						</DataGridTemplateColumn.CellTemplate>
+					</DataGridTemplateColumn>
                 </DataGrid.Columns>
             </DataGrid>
         </Grid>
@@ -70,7 +85,7 @@
                 <TextBox x:Name="txtCapacidad" Padding="5" Margin="0,0,0,10"/>
 
                 <TextBlock Text="Categoría Preferente:" Margin="0,0,0,5"/>
-                <ComboBox x:Name="cmbCategoria" Padding="5" Margin="0,0,0,10" DisplayMemberPath="Nombre" SelectedValuePath="Id"/>
+                <ComboBox x:Name="cmbCategoria" Padding="5" Margin="0,0,0,10" DisplayMemberPath="name" SelectedValuePath="category_id" SelectedValue="{Binding preferred_category_id}"/>
                 <TextBlock Text="* Si se asigna, el sistema alertará al colocar productos de otra categoría." 
                            FontSize="10" Foreground="Gray" TextWrapping="Wrap" Margin="0,0,0,15"/>
 

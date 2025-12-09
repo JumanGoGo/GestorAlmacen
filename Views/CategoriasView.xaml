@@ -4,7 +4,8 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              mc:Ignorable="d" 
-             d:DesignHeight="450" d:DesignWidth="800" Background="White">
+             d:DesignHeight="450" d:DesignWidth="800" Background="White" Foreground="Black">
+	
 
     <Grid Margin="20">
         <Grid.ColumnDefinitions>
@@ -39,18 +40,33 @@
                       CanUserAddRows="False" SelectionMode="Single" BorderBrush="#DDD" BorderThickness="1"
                       SelectionChanged="dgCategorias_SelectionChanged">
                 <DataGrid.Columns>
-                    <DataGridTextColumn Header="ID" Binding="{Binding Id}" Width="50"/>
-                    <DataGridTextColumn Header="Nombre" Binding="{Binding Nombre}" Width="150" FontWeight="Bold"/>
-                    <DataGridTextColumn Header="Descripción" Binding="{Binding Descripcion}" Width="*"/>
-                    <DataGridTemplateColumn Header="Estado" Width="80">
-                        <DataGridTemplateColumn.CellTemplate>
-                            <DataTemplate>
-                                <!-- Simulamos visualización de estado -->
-                                <TextBlock Text="{Binding IsActive}" Foreground="Gray"/>
-                            </DataTemplate>
-                        </DataGridTemplateColumn.CellTemplate>
-                    </DataGridTemplateColumn>
-                </DataGrid.Columns>
+                    <DataGridTextColumn Header="ID" Binding="{Binding category_id}" Width="50"/>
+                    <DataGridTextColumn Header="Nombre" Binding="{Binding name}" Width="150" FontWeight="Bold"/>
+                    <DataGridTextColumn Header="Descripción" Binding="{Binding description}" Width="*"/>
+					<DataGridTemplateColumn Header="Estado" Width="80">
+						<DataGridTemplateColumn.CellTemplate>
+							<DataTemplate>
+								<TextBlock FontSize="12" FontWeight="Bold" HorizontalAlignment="Center">
+									<TextBlock.Style>
+										<Style TargetType="TextBlock">
+											<!-- Valor por defecto: Inactivo -->
+											<Setter Property="Text" Value="INACTIVA"/>
+											<Setter Property="Foreground" Value="Red"/>
+
+											<Style.Triggers>
+												<DataTrigger Binding="{Binding is_active}" Value="True">
+													<Setter Property="Text" Value="ACTIVA"/>
+													<Setter Property="Foreground" Value="Green"/>
+												</DataTrigger>
+											</Style.Triggers>
+										</Style>
+									</TextBlock.Style>
+								</TextBlock>
+							</DataTemplate>
+						</DataGridTemplateColumn.CellTemplate>
+					</DataGridTemplateColumn>
+
+				</DataGrid.Columns>
             </DataGrid>
         </Grid>
 

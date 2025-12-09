@@ -1,13 +1,14 @@
 ﻿<Window x:Class="GestorAlmacen.MainWindow"
         xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
         xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
-        Title="Jepack WMS - Sistema de Gestión de Almacén" Height="750" Width="1100" 
+        Title="Jepack WMS - Sistema de Gestión de Almacén" Height="750" Width="1100" Foreground="Black" 
         WindowStartupLocation="CenterScreen" Background="#F0F2F5">
 
     <Window.Resources>
         <!-- ESTILO PARA LOS BOTONES TIPO "MÓDULO" -->
         <Style x:Key="ModuleButtonStyle" TargetType="Button">
             <Setter Property="Background" Value="#34495E"/>
+			<Setter Property="Foreground" Value="White"/>
             <!-- Color Base Oscuro -->
             <Setter Property="Foreground" Value="White"/>
             <Setter Property="Margin" Value="10,5,10,5"/>
@@ -203,9 +204,16 @@
                 </Grid.RowDefinitions>
 
                 <!-- Barra superior sutil -->
-               
 
-                <Frame x:Name="MainContent" Grid.Row="1" NavigationUIVisibility="Hidden" Margin="20"/>
+
+				<Frame
+            x:Name="MainContent"
+            Grid.Row="1"
+            NavigationUIVisibility="Hidden"
+            Margin="20"
+            Foreground="Black"/>
+				
+				
             </Grid>
         </Border>
     </Grid>

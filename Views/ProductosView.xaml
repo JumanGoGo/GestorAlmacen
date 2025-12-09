@@ -4,7 +4,7 @@
              xmlns:mc="http://schemas.openxmlformats.org/markup-compatibility/2006" 
              xmlns:d="http://schemas.microsoft.com/expression/blend/2008" 
              mc:Ignorable="d" 
-             d:DesignHeight="450" d:DesignWidth="800" Background="White">
+             d:DesignHeight="450" d:DesignWidth="800" Background="White" Foreground="#2D3E50">
 
     <Grid Margin="20">
         <Grid.RowDefinitions>
@@ -29,18 +29,37 @@
             </StackPanel>
         </Grid>
 
-        <DataGrid x:Name="dgProductos" Grid.Row="1" AutoGenerateColumns="False" IsReadOnly="True" 
-                  CanUserAddRows="False" SelectionMode="Single"
-                  BorderBrush="#DDD" BorderThickness="1">
-            <DataGrid.Columns>
-                <DataGridTextColumn Header="ID" Binding="{Binding Id}" Width="50"/>
-                <DataGridTextColumn Header="SKU" Binding="{Binding Sku}" Width="100" FontWeight="Bold"/>
-                <DataGridTextColumn Header="Nombre" Binding="{Binding Nombre}" Width="*"/>
-                <DataGridTextColumn Header="Categoría" Binding="{Binding Categoria}" Width="150"/>
-                <DataGridTextColumn Header="Stock Global" Binding="{Binding StockTotal}" Width="100"/>
-                <DataGridCheckBoxColumn Header="Activo" Binding="{Binding IsActive}" Width="60"/>
-            </DataGrid.Columns>
-        </DataGrid>
+		<DataGrid x:Name="dgProductos" Grid.Row="1" AutoGenerateColumns="False" IsReadOnly="True"
+		   CanUserAddRows="False" SelectionMode="Single"
+		   BorderBrush="#DDD" BorderThickness="1"
+		   RowBackground="White" AlternatingRowBackground="#F8F9FA">
+
+			<DataGrid.Resources>
+				<Style TargetType="DataGridCell">
+					<Setter Property="Foreground" Value="#2D3E50"/>
+					<Style.Triggers>
+						<Trigger Property="IsSelected" Value="True">
+							<Setter Property="Background" Value="#007ACC"/>
+							<Setter Property="Foreground" Value="White"/>
+						</Trigger>
+					</Style.Triggers>
+				</Style>
+			</DataGrid.Resources>
+
+			<DataGrid.Columns>
+				<DataGridTextColumn Header="ID" Binding="{Binding product_id}" Width="50"/>
+
+				<DataGridTextColumn Header="SKU" Binding="{Binding sku}" Width="100" FontWeight="Bold"/>
+
+				<DataGridTextColumn Header="Nombre" Binding="{Binding name}" Width="*"/>
+
+				<DataGridTextColumn Header="Categoría" Binding="{Binding Category.name}" Width="150"/>
+
+				<DataGridTextColumn Header="Stock Global" Binding="{Binding StockCalculado}" Width="100"/>
+
+				<DataGridCheckBoxColumn Header="Activo" Binding="{Binding is_active}" Width="60"/>
+			</DataGrid.Columns>
+		</DataGrid>
 
         <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,15,0,0">
             <Button x:Name="btnNuevo" Content="Nuevo Producto" Padding="15,8" Background="#007ACC" Foreground="White" FontWeight="Bold" Margin="0,0,10,0" Click="btnNuevo_Click"/>

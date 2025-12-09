@@ -72,7 +72,7 @@
 
                 <StackPanel x:Name="pnlDestino" Grid.Column="2" Margin="0,0,10,0">
                     <TextBlock Text="Hacia (Destino):" Margin="0,0,0,5" Foreground="#388E3C" FontWeight="SemiBold"/>
-                    <ComboBox x:Name="cmbAreaDestino" Padding="5"/>
+                    <ComboBox x:Name="cmbAreaDestino" DisplayMemberPath="name"  SelectedValuePath="area_id" Padding="5"/>
                 </StackPanel>
 
                 <StackPanel Grid.Column="3" Margin="0,0,10,0">

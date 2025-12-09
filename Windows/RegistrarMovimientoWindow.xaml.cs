@@ -92,36 +92,69 @@ namespace GestorAlmacen.Views.Windows
             _carrito.Add(item);
             ActualizarTotales();
         }
-
         private void btnGuardarTodo_Click(object sender, RoutedEventArgs e)
         {
             if (_carrito.Count == 0) return;
-            string tipo = ((ComboBoxItem)cmbTipoMovimiento.SelectedItem).Tag.ToString(); // ENTR, SAL
+
+            // Obtener Tag (ENTR o SAL)
+            if (cmbTipoMovimiento.SelectedItem == null) return;
+            string tipo = ((ComboBoxItem)cmbTipoMovimiento.SelectedItem).Tag.ToString();
 
             using (var db = new WMS_DBEntities())
             {
+                // 1. ABRIR CONEXIÓN MANUALMENTE
+                // Necesario porque vamos a usar una transacción manual clásica
+                if (db.Database.Connection.State != System.Data.ConnectionState.Open)
+                {
+                    db.Database.Connection.Open();
+                }
+
+                // Usamos .Connection.BeginTransaction() (La forma clásica compatible con tu versión)
                 using (var transaction = db.Database.Connection.BeginTransaction())
                 {
                     try
                     {
-                        // 1. OBTENER FOLIO (Llamada cruda a SP)
-                        // EF no siempre mapea params output facil, usamos SQL raw
-                        var folioParam = new System.Data.SqlClient.SqlParameter
-                        {
-                            ParameterName = "@folio",
-                            SqlDbType = System.Data.SqlDbType.NVarChar,
-                            Size = 30,
-                            Direction = System.Data.ParameterDirection.Output
-                        };
+                        // ----------------------------------------------------------------
+                        // PASO A: EJECUTAR EL STORED PROCEDURE MANUALMENTE
+                        // ----------------------------------------------------------------
+                        var cmd = db.Database.Connection.CreateCommand();
 
-                        db.Database.ExecuteSqlCommand("EXEC GetNextFolio @seq_name, @prefix, @folio OUT",
-                            new System.Data.SqlClient.SqlParameter("@seq_name", tipo),
-                            new System.Data.SqlClient.SqlParameter("@prefix", tipo),
-                            folioParam);
+                        // ASIGNACIÓN DIRECTA DE TRANSACCIÓN:
+                        // Como 'transaction' ya es el objeto real, lo asignamos directo.
+                        // (Ya no usamos .UnderlyingTransaction porque no existe en tu versión)
+                        cmd.Transaction = transaction;
 
-                        string folioGenerado = folioParam.Value.ToString();
+                        cmd.CommandText = "GetNextFolio";
+                        cmd.CommandType = System.Data.CommandType.StoredProcedure;
 
-                        // 2. CREAR MOVIMIENTO CABECERA
+                        // Parámetros
+                        var pSeq = cmd.CreateParameter();
+                        pSeq.ParameterName = "@seq_name";
+                        pSeq.Value = tipo;
+                        cmd.Parameters.Add(pSeq);
+
+                        var pPrefix = cmd.CreateParameter();
+                        pPrefix.ParameterName = "@prefix";
+                        pPrefix.Value = tipo;
+                        cmd.Parameters.Add(pPrefix);
+
+                        // CORRECCIÓN DE NOMBRE: @folio_generado (Según tu error anterior)
+                        var pFolio = cmd.CreateParameter();
+                        pFolio.ParameterName = "@folio_generado";
+                        pFolio.Direction = System.Data.ParameterDirection.Output;
+                        pFolio.Size = 30;
+                        cmd.Parameters.Add(pFolio);
+
+                        // Ejecutamos el comando asociado a la transacción
+                        cmd.ExecuteNonQuery();
+
+                        string folioGenerado = pFolio.Value.ToString();
+
+                        // ----------------------------------------------------------------
+                        // PASO B: GUARDAR EN ENTITY FRAMEWORK
+                        // ----------------------------------------------------------------
+
+                        // 2. Cabecera del Movimiento
                         var mov = new Movement
                         {
                             folio = folioGenerado,
@@ -132,15 +165,14 @@ namespace GestorAlmacen.Views.Windows
                             comment = txtComentario.Text
                         };
                         db.Movements.Add(mov);
-                        db.SaveChanges(); // Para obtener mov.movement_id
 
-                        // 3. DETALLES Y STOCK
+                        // EF detectará que la conexión está abierta y la usará,
+                        // respetando la transacción que iniciaste en esa conexión.
+                        db.SaveChanges();
+
+                        // 3. Detalles y Stock
                         foreach (var item in _carrito)
                         {
-                            // A) Guardar Detalle
-                            // Nota: Lógica simplificada. Si es Transferencia, se requieren 2 movimientos (Salida y Entrada)
-                            // Para este ejemplo asumimos Entrada o Salida simple.
-
                             int areaIdFinal = (tipo == "ENTR") ? item.AreaDestinoId.Value : item.AreaOrigenId.Value;
 
                             var det = new MovementDetail
@@ -152,7 +184,7 @@ namespace GestorAlmacen.Views.Windows
                             };
                             db.MovementDetails.Add(det);
 
-                            // B) Actualizar Stock
+                            // Stock
                             var stock = db.Stocks.FirstOrDefault(s => s.product_id == item.ProductId && s.area_id == areaIdFinal);
                             if (stock == null)
                             {
@@ -163,22 +195,32 @@ namespace GestorAlmacen.Views.Windows
                             if (tipo == "ENTR") stock.quantity += item.Cantidad;
                             else stock.quantity -= item.Cantidad;
 
-                            if (stock.quantity < 0) throw new Exception($"Stock insuficiente de {item.Sku}");
+                            if (stock.quantity < 0) throw new Exception($"Stock insuficiente para el producto {item.Sku}");
                         }
 
                         db.SaveChanges();
+
+                        // 4. CONFIRMAR TODO
                         transaction.Commit();
-                        MessageBox.Show($"Movimiento registrado: {folioGenerado}");
+
+                        MessageBox.Show($"Movimiento registrado correctamente: {folioGenerado}");
                         this.DialogResult = true;
                     }
                     catch (Exception ex)
                     {
-                        transaction.Rollback();
-                        MessageBox.Show("Error en transacción: " + ex.Message);
+                        // Rollback defensivo
+                        try { transaction.Rollback(); } catch { }
+
+                        string msg = ex.Message;
+                        if (ex.InnerException != null) msg += "\nDetalle: " + ex.InnerException.Message;
+
+                        MessageBox.Show("Error al guardar: " + msg, "Error Crítico", MessageBoxButton.OK, MessageBoxImage.Error);
                     }
                 }
             }
         }
+        
+
 
         // ... Otros métodos auxiliares (QuitarFila, etc) ...
         private void btnQuitarFila_Click(object sender, RoutedEventArgs e) { /* ... */ }
