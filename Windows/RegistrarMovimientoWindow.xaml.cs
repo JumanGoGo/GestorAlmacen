@@ -5,6 +5,7 @@ using System.Windows;
 using System.Windows.Controls;
 using GestorAlmacen.Models;
 using System.Data.Entity;
+using System.Transactions;
 
 namespace GestorAlmacen.Views.Windows
 {
@@ -25,14 +26,56 @@ namespace GestorAlmacen.Views.Windows
         private ObservableCollection<DetalleItem> _carrito;
         private int _usuarioId = 1; // DEBES OBTENER ESTO DEL LOGIN (Pasarlo en constructor)
 
-        public RegistrarMovimientoWindow()
+        // Constructor modificado
+        public RegistrarMovimientoWindow(string restriccion = null)
         {
             InitializeComponent();
             lblFecha.Text = DateTime.Now.ToShortDateString();
+
             _carrito = new ObservableCollection<DetalleItem>();
             dgDetalles.ItemsSource = _carrito;
             CargarAreas();
+
+            // Llamamos a la nueva lógica de filtrado
+            ConfigurarCombo(restriccion);
         }
+
+        private void ConfigurarCombo(string restriccion)
+        {
+            // Si no hay restricción, no hacemos nada (se muestran todos)
+            if (string.IsNullOrEmpty(restriccion)) return;
+
+            var itemsAEliminar = new System.Collections.Generic.List<object>();
+
+            foreach (ComboBoxItem item in cmbTipoMovimiento.Items)
+            {
+                string tag = item.Tag.ToString();
+
+                // Si estamos en modo "SAL" (Salidas), quitamos las Entradas (ENTR)
+                if (restriccion == "SAL" && tag == "ENTR")
+                {
+                    itemsAEliminar.Add(item);
+                }
+                // Si estuviéramos en modo "ENTR" (Entradas), quitamos Salidas y Transferencias
+                else if (restriccion == "ENTR" && (tag == "SAL" || tag == "TRANS"))
+                {
+                    itemsAEliminar.Add(item);
+                }
+            }
+
+            // Eliminamos los ítems detectados
+            foreach (var item in itemsAEliminar)
+            {
+                cmbTipoMovimiento.Items.Remove(item);
+            }
+
+            // Aseguramos que siempre haya algo seleccionado
+            if (cmbTipoMovimiento.Items.Count > 0)
+            {
+                cmbTipoMovimiento.SelectedIndex = 0;
+            }
+        }
+
 
         private void CargarAreas()
         {
@@ -44,7 +87,7 @@ namespace GestorAlmacen.Views.Windows
             }
         }
 
-        // ... MANTENER LÓGICA DE VISIBILIDAD DE PANELES IGUAL QUE ANTES ...
+
         private void cmbTipoMovimiento_SelectionChanged(object sender, SelectionChangedEventArgs e)
         { /* Copiar lógica previa de visibilidad */ }
 
@@ -64,8 +107,8 @@ namespace GestorAlmacen.Views.Windows
 
         private void btnAgregar_Click(object sender, RoutedEventArgs e)
         {
-            // Validaciones (Cantidad, selección de áreas...)
-            if (lblNombreProducto.Tag == null) return;
+            // Validaciones
+
             int.TryParse(txtCantidad.Text, out int cant);
             if (cant <= 0) return;
 
@@ -95,66 +138,51 @@ namespace GestorAlmacen.Views.Windows
         private void btnGuardarTodo_Click(object sender, RoutedEventArgs e)
         {
             if (_carrito.Count == 0) return;
-
-            // Obtener Tag (ENTR o SAL)
             if (cmbTipoMovimiento.SelectedItem == null) return;
+
             string tipo = ((ComboBoxItem)cmbTipoMovimiento.SelectedItem).Tag.ToString();
 
-            using (var db = new WMS_DBEntities())
+            //TransactionScope: Maneja la transacción automáticamente para EF y SQL puro
+            using (var scope = new TransactionScope())
             {
-                // 1. ABRIR CONEXIÓN MANUALMENTE
-                // Necesario porque vamos a usar una transacción manual clásica
-                if (db.Database.Connection.State != System.Data.ConnectionState.Open)
-                {
-                    db.Database.Connection.Open();
-                }
-
-                // Usamos .Connection.BeginTransaction() (La forma clásica compatible con tu versión)
-                using (var transaction = db.Database.Connection.BeginTransaction())
+                using (var db = new WMS_DBEntities())
                 {
                     try
                     {
-                        // ----------------------------------------------------------------
-                        // PASO A: EJECUTAR EL STORED PROCEDURE MANUALMENTE
-                        // ----------------------------------------------------------------
+                        //EJECUTAR STORED PROCEDURE
+      
+
+                        // Aseguramos conexión abierta
+                        if (db.Database.Connection.State != System.Data.ConnectionState.Open)
+                            db.Database.Connection.Open();
+
                         var cmd = db.Database.Connection.CreateCommand();
-
-                        // ASIGNACIÓN DIRECTA DE TRANSACCIÓN:
-                        // Como 'transaction' ya es el objeto real, lo asignamos directo.
-                        // (Ya no usamos .UnderlyingTransaction porque no existe en tu versión)
-                        cmd.Transaction = transaction;
-
                         cmd.CommandText = "GetNextFolio";
                         cmd.CommandType = System.Data.CommandType.StoredProcedure;
 
                         // Parámetros
                         var pSeq = cmd.CreateParameter();
-                        pSeq.ParameterName = "@seq_name";
-                        pSeq.Value = tipo;
+                        pSeq.ParameterName = "@seq_name"; pSeq.Value = tipo;
                         cmd.Parameters.Add(pSeq);
 
                         var pPrefix = cmd.CreateParameter();
-                        pPrefix.ParameterName = "@prefix";
-                        pPrefix.Value = tipo;
+                        pPrefix.ParameterName = "@prefix"; pPrefix.Value = tipo;
                         cmd.Parameters.Add(pPrefix);
 
-                        // CORRECCIÓN DE NOMBRE: @folio_generado (Según tu error anterior)
+                        // Parámetro de salida correcto
                         var pFolio = cmd.CreateParameter();
                         pFolio.ParameterName = "@folio_generado";
                         pFolio.Direction = System.Data.ParameterDirection.Output;
                         pFolio.Size = 30;
                         cmd.Parameters.Add(pFolio);
 
-                        // Ejecutamos el comando asociado a la transacción
-                        cmd.ExecuteNonQuery();
+                        cmd.ExecuteNonQuery(); // Ejecutamos
 
                         string folioGenerado = pFolio.Value.ToString();
 
-                        // ----------------------------------------------------------------
-                        // PASO B: GUARDAR EN ENTITY FRAMEWORK
-                        // ----------------------------------------------------------------
+                        // GUARDAR EN ENTITY FRAMEWORK
+                        // EF se unirá automáticamente a la transacción del TransactionScope
 
-                        // 2. Cabecera del Movimiento
                         var mov = new Movement
                         {
                             folio = folioGenerado,
@@ -165,12 +193,9 @@ namespace GestorAlmacen.Views.Windows
                             comment = txtComentario.Text
                         };
                         db.Movements.Add(mov);
+                        db.SaveChanges(); // Guardamos cabecera
 
-                        // EF detectará que la conexión está abierta y la usará,
-                        // respetando la transacción que iniciaste en esa conexión.
-                        db.SaveChanges();
-
-                        // 3. Detalles y Stock
+                        // DETALLES
                         foreach (var item in _carrito)
                         {
                             int areaIdFinal = (tipo == "ENTR") ? item.AreaDestinoId.Value : item.AreaOrigenId.Value;
@@ -181,6 +206,7 @@ namespace GestorAlmacen.Views.Windows
                                 product_id = item.ProductId,
                                 area_id = areaIdFinal,
                                 quantity = item.Cantidad
+
                             };
                             db.MovementDetails.Add(det);
 
@@ -188,41 +214,42 @@ namespace GestorAlmacen.Views.Windows
                             var stock = db.Stocks.FirstOrDefault(s => s.product_id == item.ProductId && s.area_id == areaIdFinal);
                             if (stock == null)
                             {
-                                stock = new Stock { product_id = item.ProductId, area_id = areaIdFinal, quantity = 0 };
+                                stock = new Stock { product_id = item.ProductId, area_id = areaIdFinal, quantity = 0, last_update = DateTime.Now};
                                 db.Stocks.Add(stock);
                             }
 
                             if (tipo == "ENTR") stock.quantity += item.Cantidad;
                             else stock.quantity -= item.Cantidad;
 
-                            if (stock.quantity < 0) throw new Exception($"Stock insuficiente para el producto {item.Sku}");
+                            stock.last_update = DateTime.Now;
+
+                            if (stock.quantity < 0) throw new Exception($"Stock insuficiente: {item.Sku}");
                         }
 
-                        db.SaveChanges();
+                        db.SaveChanges(); // Guardamos detalles y stock
 
-                        // 4. CONFIRMAR TODO
-                        transaction.Commit();
+                        // CONFIRMAR TRANSACCIÓN
+                        scope.Complete(); // EQUIVALENTE A COMMIT
 
-                        MessageBox.Show($"Movimiento registrado correctamente: {folioGenerado}");
+                        MessageBox.Show($"Movimiento registrado: {folioGenerado}");
                         this.DialogResult = true;
                     }
                     catch (Exception ex)
                     {
-                        // Rollback defensivo
-                        try { transaction.Rollback(); } catch { }
+                        // En TransactionScope, si no llamamos a scope.Complete(), 
+                        // el Rollback es automático al salir del 'using'.
 
                         string msg = ex.Message;
                         if (ex.InnerException != null) msg += "\nDetalle: " + ex.InnerException.Message;
-
-                        MessageBox.Show("Error al guardar: " + msg, "Error Crítico", MessageBoxButton.OK, MessageBoxImage.Error);
+                        MessageBox.Show("Error al guardar: " + msg, "Error", MessageBoxButton.OK, MessageBoxImage.Error);
                     }
                 }
             }
         }
-        
 
 
-        // ... Otros métodos auxiliares (QuitarFila, etc) ...
+
+        // Métodos auxiliares
         private void btnQuitarFila_Click(object sender, RoutedEventArgs e) { /* ... */ }
         private void ActualizarTotales() { txtTotalItems.Text = _carrito.Sum(x => x.Cantidad).ToString(); }
         private void btnCancelar_Click(object sender, RoutedEventArgs e) => Close();

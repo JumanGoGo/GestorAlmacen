@@ -4,20 +4,22 @@ using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using GestorAlmacen.Models;
-using GestorAlmacen.Views.Windows;
+using GestorAlmacen.Windows;
 
 namespace GestorAlmacen.Views
 {
     public partial class MovimientosView : UserControl
     {
+       
         private string _filtroInicial;
 
         public MovimientosView(string filtro = "TODOS")
         {
             InitializeComponent();
-            _filtroInicial = filtro;
+            _filtroInicial = filtro; // Guardamos el contexto
+
             ConfigurarVista();
-            CargarMovimientos(); // Renombrado para reflejar que es real
+            CargarMovimientos();
         }
 
         private void ConfigurarVista()
@@ -47,10 +49,9 @@ namespace GestorAlmacen.Views
         {
             using (var db = new WMS_DBEntities())
             {
-                // 1. Iniciamos la consulta base
                 var query = db.Movements.Include("User").AsQueryable();
 
-                // 2. Aplicar Filtros de Fecha
+                // Filtros de Fecha
                 if (dpDesde.SelectedDate.HasValue)
                 {
                     var desde = dpDesde.SelectedDate.Value.Date;
@@ -63,12 +64,11 @@ namespace GestorAlmacen.Views
                     query = query.Where(m => m.movement_date <= hasta);
                 }
 
-                // 3. Filtro Maestro (Desde Menú Principal)
-                // CORRECCIÓN: Usamos 'movement_type' en lugar de 'type'
+                // Filtro Maestro (Desde Menú Principal: ENTR o SAL)
                 if (_filtroInicial == "ENTR") query = query.Where(x => x.movement_type == "ENTRADA");
                 if (_filtroInicial == "SAL") query = query.Where(x => x.movement_type == "SALIDA");
 
-                // 4. Filtro de Combo
+                // Filtro de Combo (Solo visible si estamos en modo TODOS)
                 if (_filtroInicial == "TODOS" && cmbFiltroTipo.SelectedItem != null)
                 {
                     var item = (ComboBoxItem)cmbFiltroTipo.SelectedItem;
@@ -76,38 +76,30 @@ namespace GestorAlmacen.Views
                     {
                         string tipoTag = item.Tag.ToString();
 
-                        // CORRECCIÓN: Usamos 'movement_type'
                         if (tipoTag == "ENTR") query = query.Where(x => x.movement_type == "ENTRADA");
                         if (tipoTag == "SAL") query = query.Where(x => x.movement_type == "SALIDA");
                         if (tipoTag == "TRANS") query = query.Where(x => x.movement_type == "TRANSFERENCIA");
                     }
                 }
 
-                // 5. Filtro Texto (Folio)
+                // Filtro Texto (Folio)
                 if (!string.IsNullOrWhiteSpace(txtBuscar.Text))
                 {
                     query = query.Where(x => x.folio.Contains(txtBuscar.Text));
                 }
 
-                // 6. PROYECCIÓN (Select) - Adaptando nombres de BD a Vista
+                // PROYECCIÓN (Select)
                 var resultado = query
                     .OrderByDescending(m => m.movement_date)
                     .Select(m => new
                     {
+                        // Definimos "Id". Esto es lo que buscará el botón ver detalle.
                         Id = m.movement_id,
                         Folio = m.folio,
                         Fecha = m.movement_date,
-
-                        // CORRECCIÓN: 'movement_type' en lugar de 'type'
                         Tipo = m.movement_type,
-
-                        // NOTA: Asumo que tu tabla Users tiene un campo 'username'. 
-                        // Si te marca error aquí, cámbialo por el nombre correcto (ej. m.User.Nombre)
                         Usuario = m.User != null ? m.User.username : "Sistema",
-
                         Estatus = m.status,
-
-                        // CORRECCIÓN: 'comment' (singular) en lugar de 'comments'
                         Comentario = m.comment
                     })
                     .ToList();
@@ -115,6 +107,7 @@ namespace GestorAlmacen.Views
                 dgMovimientos.ItemsSource = resultado;
             }
         }
+
         // --- Eventos ---
 
         private void btnFiltrar_Click(object sender, RoutedEventArgs e)
@@ -124,26 +117,55 @@ namespace GestorAlmacen.Views
 
         private void Filtro_Changed(object sender, SelectionChangedEventArgs e)
         {
-            // Evitamos recargar al iniciar si no está listo
             if (this.IsLoaded) CargarMovimientos();
         }
 
         private void btnNuevoMovimiento_Click(object sender, RoutedEventArgs e)
         {
-            RegistrarMovimientoWindow ventana = new RegistrarMovimientoWindow();
-            if (ventana.ShowDialog() == true)
+            var win = new Windows.RegistrarMovimientoWindow(_filtroInicial);
+
+            if (win.ShowDialog() == true)
             {
-                CargarMovimientos(); // Recargamos la BD real
+                CargarMovimientos();
             }
         }
 
         private void btnVerDetalle_Click(object sender, RoutedEventArgs e)
         {
-            // Usamos 'dynamic' porque estamos usando una clase anónima en el Select
-            dynamic movimiento = ((Button)sender).DataContext;
+            var boton = sender as Button;
+            var dataRow = boton.DataContext;
 
-            // Aquí podrías abrir una ventana pasando el ID real
-            MessageBox.Show($"Abriendo detalle para ID: {movimiento.Id} - Folio: {movimiento.Folio}");
+            try
+            {
+                // Para clase Movement de EF directamente
+                if (dataRow is Movement movEntity)
+                {
+                    new GestorAlmacen.Windows.DetalleMovimientoWindow(movEntity.movement_id).ShowDialog();
+                    return;
+                }
+
+                // Para objeto anónimo. Buscamos la propiedad "Id" que definimos en CargarMovimientos
+                var propId = dataRow.GetType().GetProperty("Id");
+                if (propId != null)
+                {
+                    int id = (int)propId.GetValue(dataRow, null);
+                    new GestorAlmacen.Windows.DetalleMovimientoWindow(id).ShowDialog();
+                }
+                else
+                {
+                    // Respaldo por si se llama movement_id
+                    var propMovId = dataRow.GetType().GetProperty("movement_id");
+                    if (propMovId != null)
+                    {
+                        int id = (int)propMovId.GetValue(dataRow, null);
+                        new GestorAlmacen.Windows.DetalleMovimientoWindow(id).ShowDialog();
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error al abrir detalle: " + ex.Message);
+            }
         }
     }
 }

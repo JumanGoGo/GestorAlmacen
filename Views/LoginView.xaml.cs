@@ -1,49 +1,61 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows;
-using System.Windows.Controls;
-using System.Windows.Data;
-using System.Windows.Documents;
-using System.Windows.Input;
-using System.Windows.Media;
-using System.Windows.Media.Imaging;
-using System.Windows.Shapes;
+using GestorAlmacen.Models; // Importante para acceder a la BD
 
 namespace GestorAlmacen.Views
 {
-    /// <summary>
-    /// Interaction logic for LoginView.xaml
-    /// </summary>
     public partial class LoginView : Window
     {
+        public LoginView()
+        {
+            InitializeComponent();
+        }
+
         private void btnIngresar_Click(object sender, RoutedEventArgs e)
         {
-            // AQUÍ CONECTARÍAS CON TU BASE DE DATOS PARA VALIDAR ROL
-            string usuario = txtUsuario.Text;
+            string usuario = txtUsuario.Text.Trim();
             string pass = txtPassword.Password;
 
-            // Validación simulada
-            if (usuario == "admin" && pass == "123")
+            // 1. Validaciones básicas de campos vacíos
+            if (string.IsNullOrEmpty(usuario) || string.IsNullOrEmpty(pass))
             {
-                MainWindow main = new MainWindow("Administrador"); // Pasamos el rol
-                main.Show();
-                this.Close();
+                MessageBox.Show("Por favor, ingrese usuario y contraseña.", "Aviso", MessageBoxButton.OK, MessageBoxImage.Warning);
+                return;
             }
-            else if (usuario == "user" && pass == "123")
+
+            try
             {
-                MainWindow main = new MainWindow("Usuario");
-                main.Show();
-                this.Close();
+                // 2. Conexión a Base de Datos
+                using (var db = new WMS_DBEntities())
+                {
+                    // Buscamos coincidencia de Usuario + Password + Que esté Activo
+                    // NOTA: Asumimos contraseña en texto plano según tu código anterior de UsuariosView.
+                    var userEncontrado = db.Users
+                        .FirstOrDefault(u => u.username == usuario &&
+                                             u.password_hash == pass &&
+                                             u.is_active == true);
+
+                    if (userEncontrado != null)
+                    {
+                    
+
+                        MainWindow main = new MainWindow(userEncontrado);
+                        main.Show();
+                        this.Close();
+                    }
+                    else
+                    {
+                        // 4. Fallo: Usuario no existe, password mal o usuario inactivo
+                        MessageBox.Show("Credenciales incorrectas o usuario inhabilitado.", "Error de Acceso", MessageBoxButton.OK, MessageBoxImage.Error);
+                    }
+                }
             }
-            else
+            catch (Exception ex)
             {
-                MessageBox.Show("Credenciales incorrectas.");
+                // Manejo de errores de conexión (ej. SQL Server apagado)
+                MessageBox.Show($"Error al conectar con la base de datos:\n{ex.Message}", "Error Crítico", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }
     }
-
-
 }

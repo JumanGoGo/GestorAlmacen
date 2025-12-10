@@ -26,14 +26,17 @@ namespace GestorAlmacen.Views
 
         private void CargarInventario()
         {
+            // --- CORRECCIÓN: Evitar ejecución prematura durante la carga inicial ---
+            if (dgStock == null) return;
+            // -----------------------------------------------------------------------
+
             using (var db = new WMS_DBEntities())
             {
-                // Unimos las tablas para mostrar info legible
                 var query = from s in db.Stocks
                             join p in db.Products on s.product_id equals p.product_id
                             join a in db.Areas on s.area_id equals a.area_id
                             join c in db.Categories on p.category_id equals c.category_id
-                            where s.quantity > 0 // Solo mostramos lo que existe
+                            where s.quantity > 0
                             select new
                             {
                                 CodigoArea = a.code,
@@ -43,16 +46,18 @@ namespace GestorAlmacen.Views
                                 Cantidad = s.quantity
                             };
 
-                // Filtros en memoria (o podrías hacerlos en la query antes del ToList)
                 var resultado = query.ToList();
 
                 // 1. Filtro Texto
-                string txt = txtBuscar.Text.ToLower();
-                if (!string.IsNullOrEmpty(txt))
-                    resultado = resultado.Where(x => x.Sku.ToLower().Contains(txt) || x.NombreProducto.ToLower().Contains(txt)).ToList();
+                if (txtBuscar != null) // También es buena práctica validar este
+                {
+                    string txt = txtBuscar.Text.ToLower();
+                    if (!string.IsNullOrEmpty(txt))
+                        resultado = resultado.Where(x => x.Sku.ToLower().Contains(txt) || x.NombreProducto.ToLower().Contains(txt)).ToList();
+                }
 
                 // 2. Filtro Área
-                if (cmbAreas.SelectedIndex > 0) // 0 es "Todas"
+                if (cmbAreas != null && cmbAreas.SelectedIndex > 0)
                 {
                     string area = cmbAreas.SelectedItem.ToString();
                     if (cmbAreas.SelectedItem is ComboBoxItem item) area = item.Content.ToString();
@@ -61,8 +66,11 @@ namespace GestorAlmacen.Views
                         resultado = resultado.Where(x => x.CodigoArea == area).ToList();
                 }
 
-                //dgStock.ItemsSource = resultado;
-                //txtTotalCantidad.Text = resultado.Sum(x => x.Cantidad).ToString();
+                // Asignación de datos (Descomentada)
+                dgStock.ItemsSource = resultado;
+
+                if (txtTotalCantidad != null)
+                    txtTotalCantidad.Text = resultado.Sum(x => x.Cantidad).ToString();
             }
         }
 

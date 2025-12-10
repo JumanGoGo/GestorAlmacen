@@ -17,10 +17,22 @@ namespace GestorAlmacen.Views
         {
             using (var db = new WMS_DBEntities())
             {
-                // Traemos los productos e incluimos la Categoría para mostrar el nombre
-                var lista = db.Products.Include("Category").ToList();
+                var lista = db.Products
+                      .Include("Category")
+                      .Include("Stocks") // <--- IMPORTANTE: Cargar los stocks relacionados
+                      .ToList();
 
-                // NOTA: Asegúrate de que en el XAML el DataGrid binding de categoría sea: Binding="{Binding Categories.name}"
+                if (lista.Count > 0)
+                {
+                    var p = lista.First();
+                    // Intenta acceder a la propiedad. 
+                    // Si esta línea marca ERROR ROJO al pegar, es que VS no une los archivos.
+                    var stockPrueba = p.StockCalculado;
+
+                    // Si compila, esto nos dirá si es problema de datos (0) o de interfaz.
+                    // MessageBox.Show($"Prueba: El producto {p.sku} tiene stock calculado: {stockPrueba}");
+                }
+
                 dgProductos.ItemsSource = lista;
             }
         }

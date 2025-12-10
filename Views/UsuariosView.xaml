@@ -39,14 +39,14 @@
                       CanUserAddRows="False" SelectionMode="Single" BorderBrush="#DDD" BorderThickness="1"
                       SelectionChanged="dgUsuarios_SelectionChanged">
                 <DataGrid.Columns>
-                    <DataGridTextColumn Header="ID" Binding="{Binding Id}" Width="40"/>
-                    <DataGridTextColumn Header="Usuario (Login)" Binding="{Binding Username}" Width="100" FontWeight="Bold"/>
-                    <DataGridTextColumn Header="Nombre Completo" Binding="{Binding DisplayName}" Width="*"/>
-                    <DataGridTextColumn Header="Rol" Binding="{Binding Role}" Width="90"/>
+                    <DataGridTextColumn Header="ID" Binding="{Binding user_id}" Width="40"/>
+                    <DataGridTextColumn Header="Usuario (Login)" Binding="{Binding username}" Width="100" FontWeight="Bold"/>
+                    <DataGridTextColumn Header="Nombre Completo" Binding="{Binding display_name}" Width="*"/>
+                    <DataGridTextColumn Header="Rol" Binding="{Binding role}" Width="90"/>
                     <DataGridTemplateColumn Header="Estado" Width="70">
                         <DataGridTemplateColumn.CellTemplate>
                             <DataTemplate>
-                                <TextBlock Text="{Binding IsActive}" Foreground="Gray"/>
+                                <TextBlock Text="{Binding is_active}" Foreground="Gray"/>
                             </DataTemplate>
                         </DataGridTemplateColumn.CellTemplate>
                     </DataGridTemplateColumn>

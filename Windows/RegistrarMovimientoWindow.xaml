@@ -90,8 +90,8 @@
             <DataGrid.Columns>
                 <DataGridTextColumn Header="SKU" Binding="{Binding Sku}" Width="80" FontWeight="Bold"/>
                 <DataGridTextColumn Header="Producto" Binding="{Binding NombreProducto}" Width="*"/>
-                <DataGridTextColumn Header="Origen" Binding="{Binding AreaOrigen}" Width="80"/>
-                <DataGridTextColumn Header="Destino" Binding="{Binding AreaDestino}" Width="80"/>
+                <DataGridTextColumn Header="Origen" Binding="{Binding AreaOrigenNombre}" Width="80"/>
+                <DataGridTextColumn Header="Destino" Binding="{Binding AreaDestinoNombre}" Width="80"/>
                 <DataGridTextColumn Header="Cant." Binding="{Binding Cantidad}" Width="60" FontWeight="Bold"/>
 
                 <DataGridTemplateColumn Width="50">

@@ -182,13 +182,25 @@
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
+
                         <StackPanel>
-                            <TextBlock Text="Sesión Activa" Foreground="Gray" FontSize="10"/>
-                            <TextBlock Text="{Binding Role, FallbackValue='Usuario'}" Foreground="White" FontWeight="Bold"/>
+                            <TextBlock Text="Sesión Activa" Foreground="#95A5A6" FontSize="10"/>
+
+                            <TextBlock Text="{Binding NombreUsuario}" 
+                       Foreground="White" 
+                       FontWeight="Bold" 
+                       FontSize="14" 
+                       TextTrimming="CharacterEllipsis"/>
+
+                            <TextBlock Text="{Binding RolUsuario}" 
+                       Foreground="#BDC3C7" 
+                       FontSize="10" 
+                       FontStyle="Italic"/>
                         </StackPanel>
+
                         <Button Grid.Column="1" Content="⏻" Click="Salir_Click" 
-                                Width="30" Height="30" Background="Transparent" Foreground="#E74C3C" 
-                                BorderThickness="0" FontSize="18" ToolTip="Cerrar Sesión"/>
+                Width="30" Height="30" Background="Transparent" Foreground="#E74C3C" 
+                BorderThickness="0" FontSize="18" ToolTip="Cerrar Sesión"/>
                     </Grid>
                 </Border>
             </Grid>

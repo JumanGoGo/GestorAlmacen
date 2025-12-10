@@ -1,37 +1,44 @@
 ﻿using System.Windows;
 using System.Windows.Controls;
+using GestorAlmacen.Models; // Necesario para usar la clase 'User'
 using GestorAlmacen.Views;
 
 namespace GestorAlmacen
 {
     public partial class MainWindow : Window
     {
-        private string _userRole;
+        private User _usuarioActual; // Guardamos el usuario completo
+        private string _userRole;    // Mantenemos esta variable para tu lógica de permisos
 
-        public MainWindow(string role)
+        // Propiedades públicas para el XAML (Binding)
+        public string NombreUsuario { get; set; }
+        public string RolUsuario { get; set; }
+
+        // Constructor modificado: recibe 'User' en vez de 'string'
+        public MainWindow(User usuario)
         {
             InitializeComponent();
-            _userRole = role;
 
-            // 1. Configuramos qué puede ver el usuario
+            _usuarioActual = usuario;
+            _userRole = usuario.role; // Asignamos el rol para la lógica interna
+
+            // Preparamos datos para la vista
+            NombreUsuario = usuario.display_name;
+            RolUsuario = usuario.role;
+
+            // IMPORTANTE: Esto permite que el XAML lea las propiedades de esta clase
+            this.DataContext = this;
+
+            // Configuración inicial
             ConfigurarPermisos();
-
-            // 2. Cargamos la vista inicial
             MainContent.Navigate(new InventarioView());
         }
 
         private void ConfigurarPermisos()
         {
-            // Reglas basadas en tu Documentación:
-            // ADMIN: Acceso Total.
-            // SUPERVISOR: Gestión de Productos/Áreas, pero NO Usuarios.
-            // OPERADOR: Solo Movimientos e Inventario. NO configuración.
-
-            // Por defecto asumimos que todo es visible, y ocultamos según restricción
-
+            // Tu lógica original, usando _userRole
             if (_userRole == "OPERADOR")
             {
-                // El Operador solo mueve mercancía, no configura el sistema
                 btnProductos.Visibility = Visibility.Collapsed;
                 btnAreas.Visibility = Visibility.Collapsed;
                 btnCategorias.Visibility = Visibility.Collapsed;
@@ -39,17 +46,14 @@ namespace GestorAlmacen
             }
             else if (_userRole == "SUPERVISOR")
             {
-                // El Supervisor gestiona el almacén, pero no la seguridad del sistema
                 btnUsuarios.Visibility = Visibility.Collapsed;
-
-                // Aseguramos que vea lo demás (por si acaso)
+                // Aseguramos visibles los demás
                 btnProductos.Visibility = Visibility.Visible;
                 btnAreas.Visibility = Visibility.Visible;
                 btnCategorias.Visibility = Visibility.Visible;
             }
             else if (_userRole == "ADMIN")
             {
-                // El Admin ve todo
                 btnUsuarios.Visibility = Visibility.Visible;
                 btnProductos.Visibility = Visibility.Visible;
                 btnAreas.Visibility = Visibility.Visible;
@@ -63,50 +67,23 @@ namespace GestorAlmacen
 
             switch (tag)
             {
-                // --- VISTAS OPERATIVAS (Todos) ---
-                case "Inventario":
-                    MainContent.Navigate(new InventarioView());
-                    break;
+                case "Inventario": MainContent.Navigate(new InventarioView()); break;
+                // Para Movimientos, pasamos el usuario actual para que (a futuro) se sepa quién registra
+                case "Movimientos": MainContent.Navigate(new MovimientosView("TODOS")); break;
+                case "Entradas": MainContent.Navigate(new MovimientosView("ENTR")); break;
+                case "Salidas": MainContent.Navigate(new MovimientosView("SAL")); break;
 
-                case "Movimientos": // Historial completo
-                    MainContent.Navigate(new MovimientosView("TODOS"));
-                    break;
+                case "Productos": MainContent.Navigate(new ProductosView()); break;
+                case "Areas": MainContent.Navigate(new AreasView()); break;
+                case "Categorias": MainContent.Navigate(new CategoriasView()); break;
+                case "Usuarios": MainContent.Navigate(new UsuariosView()); break;
 
-                case "Entradas": // Filtro preestablecido
-                    MainContent.Navigate(new MovimientosView("ENTR"));
-                    break;
-
-                case "Salidas": // Filtro preestablecido
-                    MainContent.Navigate(new MovimientosView("SAL"));
-                    break;
-
-                // --- VISTAS DE GESTIÓN (Supervisor/Admin) ---
-                case "Productos":
-                    MainContent.Navigate(new ProductosView());
-                    break;
-
-                case "Areas":
-                    MainContent.Navigate(new AreasView());
-                    break;
-
-                case "Categorias":
-                    MainContent.Navigate(new CategoriasView());
-                    break;
-
-                // --- VISTAS ADMINISTRATIVAS (Solo Admin) ---
-                case "Usuarios":
-                    MainContent.Navigate(new UsuariosView());
-                    break;
-
-                default:
-                    MessageBox.Show("Esta vista aún no está implementada.");
-                    break;
+                default: MessageBox.Show("Vista no implementada."); break;
             }
         }
 
         private void Salir_Click(object sender, RoutedEventArgs e)
         {
-            // Cerrar sesión y volver al Login
             LoginView login = new LoginView();
             login.Show();
             this.Close();
