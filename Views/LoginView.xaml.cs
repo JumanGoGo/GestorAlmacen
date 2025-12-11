@@ -30,7 +30,6 @@ namespace GestorAlmacen.Views
                 using (var db = new WMS_DBEntities())
                 {
                     // Buscamos coincidencia de Usuario + Password + Que esté Activo
-                    // NOTA: Asumimos contraseña en texto plano según tu código anterior de UsuariosView.
                     var userEncontrado = db.Users
                         .FirstOrDefault(u => u.username == usuario &&
                                              u.password_hash == pass &&
@@ -53,7 +52,7 @@ namespace GestorAlmacen.Views
             }
             catch (Exception ex)
             {
-                // Manejo de errores de conexión (ej. SQL Server apagado)
+                // Manejo de errores de conexión 
                 MessageBox.Show($"Error al conectar con la base de datos:\n{ex.Message}", "Error Crítico", MessageBoxButton.OK, MessageBoxImage.Error);
             }
         }

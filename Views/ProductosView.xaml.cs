@@ -19,18 +19,15 @@ namespace GestorAlmacen.Views
             {
                 var lista = db.Products
                       .Include("Category")
-                      .Include("Stocks") // <--- IMPORTANTE: Cargar los stocks relacionados
+                      .Include("Stocks") // Cargar los stocks relacionados
                       .ToList();
 
                 if (lista.Count > 0)
                 {
                     var p = lista.First();
                     // Intenta acceder a la propiedad. 
-                    // Si esta línea marca ERROR ROJO al pegar, es que VS no une los archivos.
                     var stockPrueba = p.StockCalculado;
 
-                    // Si compila, esto nos dirá si es problema de datos (0) o de interfaz.
-                    // MessageBox.Show($"Prueba: El producto {p.sku} tiene stock calculado: {stockPrueba}");
                 }
 
                 dgProductos.ItemsSource = lista;
@@ -53,7 +50,7 @@ namespace GestorAlmacen.Views
         }
 
         // ... Implementa Delete y Buscar de forma similar a Categorías ...
-        private void btnEliminar_Click(object sender, RoutedEventArgs e) { } // Pendiente implementar soft delete
+        private void btnEliminar_Click(object sender, RoutedEventArgs e) { } 
         private void btnBuscar_Click(object sender, RoutedEventArgs e) { }
     }
 }

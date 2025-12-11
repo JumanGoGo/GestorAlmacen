@@ -1,0 +1,47 @@
+﻿<UserControl x:Class="GestorAlmacen.Views.ImportExportView"
+             xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+             xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+             Background="White">
+    <Grid Margin="20">
+        <TabControl>
+            <TabItem Header="Importar Masiva (CSV)">
+                <StackPanel Margin="20">
+                    <TextBlock Text="Seleccione el tipo de datos a cargar:" FontWeight="Bold"/>
+                    <ComboBox x:Name="cmbTipoImportacion" Width="200" HorizontalAlignment="Left" Margin="0,5,0,20">
+                        <ComboBoxItem Content="Categorías" Tag="CAT"/>
+                        <ComboBoxItem Content="Áreas" Tag="AREA"/>
+                        <ComboBoxItem Content="Productos" Tag="PROD"/>
+                        <ComboBoxItem Content="Inventario Inicial (Entradas)" Tag="MOV"/>
+                    </ComboBox>
+
+                    <TextBlock Text="Formato requerido CSV: (Sin cabeceras complejas)" Foreground="Gray" FontStyle="Italic"/>
+                    <TextBlock x:Name="lblFormato" Text="Seleccione una opción arriba..." Margin="0,0,0,10" Foreground="#2980B9"/>
+
+                    <StackPanel Orientation="Horizontal" Margin="0,10">
+                        <Button Content="Seleccionar Archivo .CSV" Click="btnSeleccionar_Click" Padding="10,5"/>
+                        <TextBlock x:Name="txtArchivo" Text="Ningún archivo seleccionado" VerticalAlignment="Center" Margin="10,0"/>
+                    </StackPanel>
+
+                    <Button Content="PROCESAR IMPORTACIÓN" x:Name="btnProcesar" Click="btnProcesar_Click" 
+                            Background="#27AE60" Foreground="White" FontWeight="Bold" 
+                            HorizontalAlignment="Left" Padding="20,10" IsEnabled="False"/>
+
+                    <TextBox x:Name="txtLog" Height="200" Margin="0,20,0,0" 
+                             AcceptsReturn="True" VerticalScrollBarVisibility="Auto" IsReadOnly="True" Background="#F0F0F0"/>
+                </StackPanel>
+            </TabItem>
+
+            <TabItem Header="Reportes">
+                <StackPanel Margin="20">
+                    <TextBlock Text="Generar Reporte de Inventario" FontSize="18" FontWeight="Bold" Margin="0,0,0,20"/>
+
+                    <TextBlock Text="Filtrar por Área (Opcional):"/>
+                    <ComboBox x:Name="cmbAreaReporte" Width="200" HorizontalAlignment="Left" Margin="0,5,0,20"/>
+
+                    <Button Content="📄 Exportar a CSV (Excel)" Click="btnExportar_Click" 
+                            Background="#3498DB" Foreground="White" Padding="15,8" HorizontalAlignment="Left"/>
+                </StackPanel>
+            </TabItem>
+        </TabControl>
+    </Grid>
+</UserControl>

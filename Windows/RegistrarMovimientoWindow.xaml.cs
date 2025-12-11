@@ -89,7 +89,7 @@ namespace GestorAlmacen.Views.Windows
 
 
         private void cmbTipoMovimiento_SelectionChanged(object sender, SelectionChangedEventArgs e)
-        { /* Copiar lógica previa de visibilidad */ }
+        { }
 
         private void btnBuscarProducto_Click(object sender, RoutedEventArgs e)
         {

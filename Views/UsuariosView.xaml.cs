@@ -85,7 +85,7 @@ namespace GestorAlmacen.Views
                     var nuevo = new User
                     {
                         username = txtUsername.Text.Trim(),
-                        password_hash = txtPassword.Password, // Texto plano por ahora
+                        password_hash = txtPassword.Password,
                         display_name = txtDisplayName.Text.Trim(),
                         role = rol,
                         is_active = true,
@@ -100,7 +100,7 @@ namespace GestorAlmacen.Views
                     edit.role = rol;
                     edit.is_active = (bool)chkActivo.IsChecked;
 
-                    // Solo actualizamos pass si escribió algo nuevo
+                   
                     if (!string.IsNullOrEmpty(txtPassword.Password))
                         edit.password_hash = txtPassword.Password;
                 }
@@ -110,7 +110,6 @@ namespace GestorAlmacen.Views
             }
         }
 
-        // btnEliminar_Click y txtBuscar_TextChanged similar a los anteriores...
         private void btnEliminar_Click(object sender, RoutedEventArgs e)
         {
             if (_seleccionado == null) return;

@@ -26,9 +26,9 @@ namespace GestorAlmacen.Views
 
         private void CargarInventario()
         {
-            // --- CORRECCIÓN: Evitar ejecución prematura durante la carga inicial ---
+          
             if (dgStock == null) return;
-            // -----------------------------------------------------------------------
+         
 
             using (var db = new WMS_DBEntities())
             {
@@ -49,7 +49,7 @@ namespace GestorAlmacen.Views
                 var resultado = query.ToList();
 
                 // 1. Filtro Texto
-                if (txtBuscar != null) // También es buena práctica validar este
+                if (txtBuscar != null) 
                 {
                     string txt = txtBuscar.Text.ToLower();
                     if (!string.IsNullOrEmpty(txt))

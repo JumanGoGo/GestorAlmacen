@@ -1,10 +1,10 @@
 ﻿using GestorAlmacen.Models;
 using System;
-using System.Linq;
+using System.Linq; 
 using System.Security.Cryptography;
 using System.Windows;
 using System.Windows.Controls;
-// Agrega: using System.Data.Entity; si necesitas .Include, pero aqui usaremos carga lazy o directa
+using System.Data.Entity;
 
 namespace GestorAlmacen.Views
 {
@@ -15,16 +15,16 @@ namespace GestorAlmacen.Views
         public AreasView()
         {
             InitializeComponent();
-            CargarListas(); // Cargar combo
-            CargarDatos();  // Cargar grid
+            CargarListas();
+            CargarDatos();
         }
 
+      
         private void CargarListas()
         {
             using (var db = new WMS_DBEntities())
             {
                 var cats = db.Categories.Where(c => c.is_active == true).ToList();
-                // Agregamos opción vacía al principio si quieres, o manejamos null
                 cmbCategoria.ItemsSource = cats;
             }
         }
@@ -33,15 +33,14 @@ namespace GestorAlmacen.Views
         {
             using (var db = new WMS_DBEntities())
             {
-                // Incluimos la relación con Categories para mostrar el nombre en el Grid
-                // Nota: Asegúrate que tu Grid en XAML haga Binding a 'Categories.name' en la columna correspondiente
-                var lista = db.Areas.Include("Category").Where(a => a.is_active == true).ToList();
+                var lista = db.Areas
+                      .Include("Category")
+                      .OrderByDescending(a => a.is_active)
+                      .ThenBy(a => a.code)
+                      .ToList();
                 dgAreas.ItemsSource = lista;
             }
         }
-
-        // IMPORTANTE: En tu XAML (AreasView.xaml), busca la columna de 'Cat. Preferente' 
-        // y cambia el Binding="{Binding CategoriaPreferente}" por Binding="{Binding Categories.name}"
 
         private void dgAreas_SelectionChanged(object sender, SelectionChangedEventArgs e)
         {
@@ -49,7 +48,7 @@ namespace GestorAlmacen.Views
             {
                 _seleccionado = area;
                 txtCodigo.Text = area.code;
-                txtCodigo.IsEnabled = false; // Código inmutable
+                txtCodigo.IsEnabled = false;
                 txtNombre.Text = area.name;
                 txtCapacidad.Text = area.capacity.ToString();
                 chkActivo.IsChecked = area.is_active;
@@ -64,10 +63,7 @@ namespace GestorAlmacen.Views
             }
         }
 
-        private void btnLimpiar_Click(object sender, RoutedEventArgs e)
-        {
-            Limpiar();
-        }
+        private void btnLimpiar_Click(object sender, RoutedEventArgs e) => Limpiar();
 
         private void Limpiar()
         {
@@ -83,33 +79,63 @@ namespace GestorAlmacen.Views
             btnEliminar.Visibility = Visibility.Collapsed;
         }
 
+   
         private void btnGuardar_Click(object sender, RoutedEventArgs e)
         {
-            if (string.IsNullOrWhiteSpace(txtCodigo.Text)) return;
+            if (string.IsNullOrWhiteSpace(txtCodigo.Text))
+            {
+                MessageBox.Show("El código es obligatorio.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                return;
+            }
 
             using (var db = new WMS_DBEntities())
             {
                 int? catId = cmbCategoria.SelectedValue as int?;
-                int.TryParse(txtCapacidad.Text, out int cap);
+                if (!int.TryParse(txtCapacidad.Text, out int cap) && !string.IsNullOrWhiteSpace(txtCapacidad.Text))
+                {
+                    MessageBox.Show("La capacidad debe ser un número entero válido.", "Error", MessageBoxButton.OK, MessageBoxImage.Error);
+                    return;
+                }
+                int? capacidadFinal = string.IsNullOrWhiteSpace(txtCapacidad.Text) ? (int?)null : cap;
 
                 if (_seleccionado == null)
                 {
+                    // NUEVA ÁREA (INSERT)
                     var nueva = new Area
                     {
                         code = txtCodigo.Text.Trim().ToUpper(),
                         name = txtNombre.Text.Trim(),
-                        capacity = cap > 0 ? (int?)cap : null,
+                        capacity = capacidadFinal,
                         preferred_category_id = catId,
-                        is_active = true,
+                        is_active = true, // Las nuevas nacen activas
                         created_at = DateTime.Now
                     };
                     db.Areas.Add(nueva);
                 }
                 else
                 {
+              
+                    // VALIDACIÓN DE STOCK: Si el usuario desmarcó el checkbox de activo...
+                    if (chkActivo.IsChecked == false)
+                    {
+                        // Verificamos si hay stock mayor a 0 en esta área
+                        bool tieneMaterial = db.Stocks.Any(s => s.area_id == _seleccionado.area_id && s.quantity > 0);
+
+                        if (tieneMaterial)
+                        {
+                            MessageBox.Show("No se puede desactivar esta área porque contiene material.\n\n" +
+                                            "Por favor, realice una TRANSFERENCIA de todo el material a otra ubicación antes de desactivarla.",
+                                            "Bloqueo de Seguridad", MessageBoxButton.OK, MessageBoxImage.Warning);
+
+                            // Revertimos el checkbox visualmente para que el usuario vea que no se pudo
+                            chkActivo.IsChecked = true;
+                            return; // Cancelamos el guardado
+                        }
+                    }
+
                     var edit = db.Areas.Find(_seleccionado.area_id);
                     edit.name = txtNombre.Text;
-                    edit.capacity = cap > 0 ? (int?)cap : null;
+                    edit.capacity = capacidadFinal;
                     edit.preferred_category_id = catId;
                     edit.is_active = (bool)chkActivo.IsChecked;
                 }
@@ -119,18 +145,33 @@ namespace GestorAlmacen.Views
                     db.SaveChanges();
                     Limpiar();
                     CargarDatos();
+                    MessageBox.Show("Datos guardados correctamente.");
                 }
                 catch (Exception ex) { MessageBox.Show("Error (posible código duplicado): " + ex.Message); }
             }
         }
 
-        // ... (Implementar btnEliminar y txtBuscar igual que en CategoriasView)
+     
         private void btnEliminar_Click(object sender, RoutedEventArgs e)
         {
             if (_seleccionado == null) return;
-            if (MessageBox.Show("¿Desactivar Área?", "Confirmar", MessageBoxButton.YesNo) == MessageBoxResult.Yes)
+
+            using (var db = new WMS_DBEntities())
             {
-                using (var db = new WMS_DBEntities())
+                // 1. VALIDACIÓN DE STOCK ANTES DE PREGUNTAR
+                // Usamos .Any() que es muy rápido, devuelve true apenas encuentra 1 registro
+                bool tieneMaterial = db.Stocks.Any(s => s.area_id == _seleccionado.area_id && s.quantity > 0);
+
+                if (tieneMaterial)
+                {
+                    MessageBox.Show($"El área '{_seleccionado.code}' contiene existencias.\n\n" +
+                                    "Acción requerida: Mueva el material a otra ubicación mediante una Transferencia.",
+                                    "Imposible Desactivar", MessageBoxButton.OK, MessageBoxImage.Stop);
+                    return; // Detenemos el proceso aquí
+                }
+
+                // 2. Si no tiene stock, procedemos con la confirmación normal
+                if (MessageBox.Show("¿Desactivar Área?", "Confirmar", MessageBoxButton.YesNo, MessageBoxImage.Question) == MessageBoxResult.Yes)
                 {
                     var a = db.Areas.Find(_seleccionado.area_id);
                     a.is_active = false;
@@ -143,7 +184,18 @@ namespace GestorAlmacen.Views
 
         private void txtBuscar_TextChanged(object sender, TextChangedEventArgs e)
         {
-            // Lógica de filtro opcional
+            using (var db = new WMS_DBEntities())
+            {
+                string query = txtBuscar.Text.ToLower();
+                var resultado = db.Areas
+                                  .Include("Category")
+                                  .Where(a => a.code.ToLower().Contains(query) ||
+                                              a.name.ToLower().Contains(query))
+                                  .OrderByDescending(a => a.is_active)
+                                  .ThenBy(a => a.code)
+                                  .ToList();
+                dgAreas.ItemsSource = resultado;
+            }
         }
     }
 }

@@ -113,6 +113,9 @@
     <Compile Include="Views\CategoriasView.xaml.cs">
       <DependentUpon>CategoriasView.xaml</DependentUpon>
     </Compile>
+    <Compile Include="Views\ImportExportView.xaml.cs">
+      <DependentUpon>ImportExportView.xaml</DependentUpon>
+    </Compile>
     <Compile Include="Views\InventarioView.xaml.cs">
       <DependentUpon>InventarioView.xaml</DependentUpon>
     </Compile>
@@ -154,6 +157,10 @@
       <Generator>MSBuild:Compile</Generator>
     </Page>
     <Page Include="Views\CategoriasView.xaml">
+      <SubType>Designer</SubType>
+      <Generator>MSBuild:Compile</Generator>
+    </Page>
+    <Page Include="Views\ImportExportView.xaml">
       <SubType>Designer</SubType>
       <Generator>MSBuild:Compile</Generator>
     </Page>

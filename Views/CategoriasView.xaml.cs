@@ -23,11 +23,11 @@ namespace GestorAlmacen.Views
             {
                 using (var db = new WMS_DBEntities())
                 {
-                    // Cargamos solo las categorías activas
+                    
                     var lista = db.Categories
-                                  .Where(c => c.is_active == true)
-                                  .OrderBy(c => c.name)
-                                  .ToList();
+                          .OrderByDescending(c => c.is_active) // True (Activas) primero
+                          .ThenBy(c => c.name)                 // Luego alfabéticamente
+                          .ToList();
                     dgCategorias.ItemsSource = lista;
                 }
             }
@@ -106,7 +106,7 @@ namespace GestorAlmacen.Views
                     db.SaveChanges();
                     MessageBox.Show("Guardado correctamente.");
                     LimpiarFormulario();
-                    CargarDatos(); // Recargar grilla
+                    CargarDatos(); 
                 }
             }
             catch (Exception ex)
@@ -142,8 +142,10 @@ namespace GestorAlmacen.Views
             {
                 var query = txtBuscar.Text.ToLower();
                 dgCategorias.ItemsSource = db.Categories
-                                             .Where(c => c.is_active == true && c.name.Contains(query))
-                                             .ToList();
+                                     .Where(c => c.name.Contains(query)) // Solo filtramos por texto
+                                     .OrderByDescending(c => c.is_active)
+                                     .ThenBy(c => c.name)
+                                     .ToList();
             }
         }
     }
