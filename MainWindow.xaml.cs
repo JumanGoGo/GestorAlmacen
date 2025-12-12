@@ -18,7 +18,7 @@ namespace GestorAlmacen
         public MainWindow(User usuario)
         {
             InitializeComponent();
-
+            
             _usuarioActual = usuario;
             _userRole = usuario.role; // Asignamos el rol para la lógica interna
 
@@ -26,8 +26,8 @@ namespace GestorAlmacen
             NombreUsuario = usuario.display_name;
             RolUsuario = usuario.role;
 
-            // Permite que el XAML lea las propiedades de esta clase
-            this.DataContext = this;
+            // IMPORTANTE: Esto permite que el XAML lea las propiedades de esta clase
+            this.DataContext = this; 
 
             // Configuración inicial
             ConfigurarPermisos();
@@ -36,55 +36,28 @@ namespace GestorAlmacen
 
         private void ConfigurarPermisos()
         {
-            // LÓGICA DE PERMISOS
-
-            // 1. Caso OPERADOR: Acceso muy restringido
+            // Tu lógica original, usando _userRole
             if (_userRole == "OPERADOR")
             {
-                // Ocultar Configuración
-                lblConfigHeader.Visibility = Visibility.Collapsed;
                 btnProductos.Visibility = Visibility.Collapsed;
                 btnAreas.Visibility = Visibility.Collapsed;
                 btnCategorias.Visibility = Visibility.Collapsed;
-
-                // Ocultar Admin Usuarios
-                lblAdminHeader.Visibility = Visibility.Collapsed;
                 btnUsuarios.Visibility = Visibility.Collapsed;
-
-                // Ocultar Herramientas (Importar/Exportar)
-                btnImportExport.Visibility = Visibility.Collapsed;
             }
-            // 2. Caso SUPERVISOR: Operativo + Config + Herramientas (Sin Usuarios)
             else if (_userRole == "SUPERVISOR")
             {
-                // Ocultar Admin Usuarios
-                lblAdminHeader.Visibility = Visibility.Collapsed;
                 btnUsuarios.Visibility = Visibility.Collapsed;
-
-                // Mostrar Configuración
-                lblConfigHeader.Visibility = Visibility.Visible;
+                // Aseguramos visibles los demás
                 btnProductos.Visibility = Visibility.Visible;
                 btnAreas.Visibility = Visibility.Visible;
                 btnCategorias.Visibility = Visibility.Visible;
-
-                // Mostrar Herramientas -> REQUERIMIENTO NUEVO
-                lblHerramientasHeader.Visibility = Visibility.Visible;
-                btnImportExport.Visibility = Visibility.Visible;
             }
-            // 3. Caso ADMIN: Acceso Total
             else if (_userRole == "ADMIN")
             {
-                // Mostrar Todo explícitamente
-                lblConfigHeader.Visibility = Visibility.Visible;
+                btnUsuarios.Visibility = Visibility.Visible;
                 btnProductos.Visibility = Visibility.Visible;
                 btnAreas.Visibility = Visibility.Visible;
                 btnCategorias.Visibility = Visibility.Visible;
-
-                lblAdminHeader.Visibility = Visibility.Visible;
-                btnUsuarios.Visibility = Visibility.Visible;
-
-                lblHerramientasHeader.Visibility = Visibility.Visible;
-                btnImportExport.Visibility = Visibility.Visible;
             }
         }
 
@@ -95,15 +68,15 @@ namespace GestorAlmacen
             switch (tag)
             {
                 case "Inventario": MainContent.Navigate(new InventarioView()); break;
+                // Para Movimientos, pasamos el usuario actual para que (a futuro) se sepa quién registra
                 case "Movimientos": MainContent.Navigate(new MovimientosView("TODOS")); break;
                 case "Entradas": MainContent.Navigate(new MovimientosView("ENTR")); break;
                 case "Salidas": MainContent.Navigate(new MovimientosView("SAL")); break;
-
+                
                 case "Productos": MainContent.Navigate(new ProductosView()); break;
                 case "Areas": MainContent.Navigate(new AreasView()); break;
                 case "Categorias": MainContent.Navigate(new CategoriasView()); break;
                 case "Usuarios": MainContent.Navigate(new UsuariosView()); break;
-
                 case "ImportExport": MainContent.Navigate(new ImportExportView()); break;
 
                 default: MessageBox.Show("Vista no implementada."); break;

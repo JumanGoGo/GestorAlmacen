@@ -27,7 +27,7 @@ namespace GestorAlmacen.Views
                     switch (tag)
                     {
                         case "CAT": lblFormato.Text = "Formato: NombreCategoria, Descripcion"; break;
-                        case "AREA": lblFormato.Text = "Formato: CodigoArea, NombreArea"; break;
+                        case "AREA": lblFormato.Text = "Formato: Codigo, Nombre, Capacidad (Opc), Categoria (Opc)"; break;
                         case "PROD": lblFormato.Text = "Formato: SKU, Nombre, NombreCategoria"; break;
                         case "MOV": lblFormato.Text = "Formato: SKU, CodigoArea, Cantidad"; break;
                     }
@@ -124,41 +124,70 @@ namespace GestorAlmacen.Views
 
         private void ImportarArea(WMS_DBEntities db, string[] d)
         {
-            // Esperamos al menos 2 campos: CodigoArea, NombreArea
+            // Esperamos al menos 2 campos obligatorios: Codigo y Nombre
             if (d.Length < 2)
             {
-                throw new Exception("Formato incorrecto para Área. Se requieren: CodigoArea, NombreArea");
+                throw new Exception("Formato incorrecto. Mínimo requerido: CodigoArea, NombreArea");
             }
 
             string codigo = d[0].Trim();
             string nombre = d[1].Trim();
 
-            // Si el código o el nombre están vacíos, lo saltamos o informamos
             if (string.IsNullOrEmpty(codigo) || string.IsNullOrEmpty(nombre))
             {
-                throw new Exception("El código y el nombre del área no pueden estar vacíos.");
+                throw new Exception("El código y nombre del área son obligatorios.");
             }
 
-            // Comprobamos si el área ya existe
+            // --- PROCESAMIENTO DE CAMPOS OPCIONALES ---
+
+            // 1. Capacidad (Columna 3 - Índice 2)
+            int? capacidad = null;
+            if (d.Length > 2 && int.TryParse(d[2].Trim(), out int cap))
+            {
+                if (cap > 0) capacidad = cap;
+            }
+
+            // 2. Categoría Preferida (Columna 4 - Índice 3)
+            int? idCategoria = null;
+            if (d.Length > 3 && !string.IsNullOrWhiteSpace(d[3]))
+            {
+                string nombreCat = d[3].Trim();
+                // Buscamos la categoría por nombre en la BD
+                var cat = db.Categories.FirstOrDefault(c => c.name == nombreCat);
+
+                // Opcional: Si la categoría no existe, ¿lanzamos error o la ignoramos?
+                // Aquí decidimos lanzarlo para que el usuario sepa que hay un error de datos.
+                if (cat != null)
+                {
+                    idCategoria = cat.category_id;
+                }
+                else
+                {
+                    throw new Exception($"La categoría preferida '{nombreCat}' no existe. Cárguela primero.");
+                }
+            }
+
+            // --- CREACIÓN DEL ÁREA ---
+
             if (!db.Areas.Any(a => a.code == codigo))
             {
                 Area nuevaArea = new Area
                 {
                     code = codigo,
                     name = nombre,
+                    capacity = capacidad,            // Asignamos el valor procesado
+                    preferred_category_id = idCategoria, // Asignamos el ID encontrado
                     is_active = true,
                     created_at = DateTime.Now
-
                 };
 
                 db.Areas.Add(nuevaArea);
             }
             else
             {
-                throw new Exception($"El Área con código '{codigo}' ya existe y no será importada.");
+                throw new Exception($"El Área '{codigo}' ya existe.");
             }
         }
-
         private void ImportarProducto(WMS_DBEntities db, string[] d)
         {
             string sku = d[0].Trim();

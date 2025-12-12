@@ -64,6 +64,7 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="Helpers\Converters.cs" />
+    <Compile Include="Helpers\SecurityHelper.cs" />
     <Compile Include="Models\Area.cs">
       <DependentUpon>WMSModel.tt</DependentUpon>
     </Compile>

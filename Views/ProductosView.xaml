@@ -62,9 +62,18 @@
 		</DataGrid>
 
         <StackPanel Grid.Row="2" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,15,0,0">
+
             <Button x:Name="btnNuevo" Content="Nuevo Producto" Padding="15,8" Background="#007ACC" Foreground="White" FontWeight="Bold" Margin="0,0,10,0" Click="btnNuevo_Click"/>
             <Button x:Name="btnEditar" Content="Editar" Padding="15,8" Margin="0,0,10,0" Click="btnEditar_Click"/>
             <Button x:Name="btnEliminar" Content="Desactivar" Padding="15,8" Background="#E74C3C" Foreground="White" Click="btnEliminar_Click"/>
+
+            <Button x:Name="btnHardDelete" 
+                    Content="🗑️ BORRAR" 
+                    Background="#8B0000" Foreground="White" FontWeight="Bold"
+                    Margin="20,0,0,0" Padding="10,5"
+                    ToolTip="Eliminación Física (Solo Admin - Irreversible)"
+                    Click="btnHardDelete_Click"
+                    Visibility="Collapsed"/>
         </StackPanel>
     </Grid>
 </UserControl>

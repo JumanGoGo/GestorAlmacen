@@ -1,7 +1,9 @@
 ﻿using System;
 using System.Linq;
 using System.Windows;
-using GestorAlmacen.Models; 
+using GestorAlmacen.Models;
+using GestorAlmacen.Helpers;
+
 namespace GestorAlmacen.Views
 {
     public partial class LoginView : Window
@@ -14,10 +16,13 @@ namespace GestorAlmacen.Views
         private void btnIngresar_Click(object sender, RoutedEventArgs e)
         {
             string usuario = txtUsuario.Text.Trim();
-            string pass = txtPassword.Password;
+            string passPlano = txtPassword.Password;
+
+            string passHashInput = SecurityHelper.ComputeSha256Hash(passPlano);
+
 
             // 1. Validaciones básicas de campos vacíos
-            if (string.IsNullOrEmpty(usuario) || string.IsNullOrEmpty(pass))
+            if (string.IsNullOrEmpty(usuario) || string.IsNullOrEmpty(passPlano))
             {
                 MessageBox.Show("Por favor, ingrese usuario y contraseña.", "Aviso", MessageBoxButton.OK, MessageBoxImage.Warning);
                 return;
@@ -28,15 +33,15 @@ namespace GestorAlmacen.Views
                 // 2. Conexión a Base de Datos
                 using (var db = new WMS_DBEntities())
                 {
-                    // Buscamos coincidencia de Usuario + Password + Que esté Activo
+                    // 2. Comparar Hash contra Hash en la base de datos
                     var userEncontrado = db.Users
                         .FirstOrDefault(u => u.username == usuario &&
-                                             u.password_hash == pass &&
+                                             u.password_hash == passHashInput && // Comparación segura
                                              u.is_active == true);
 
                     if (userEncontrado != null)
                     {
-                    
+                        App.UsuarioActual = userEncontrado;
 
                         MainWindow main = new MainWindow(userEncontrado);
                         main.Show();

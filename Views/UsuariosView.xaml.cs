@@ -3,6 +3,7 @@ using System.Linq;
 using System.Windows;
 using System.Windows.Controls;
 using GestorAlmacen.Models;
+using GestorAlmacen.Helpers;
 
 namespace GestorAlmacen.Views
 {
@@ -82,10 +83,13 @@ namespace GestorAlmacen.Views
                         MessageBox.Show("Contraseña requerida."); return;
                     }
 
+                    // APLICAR HASH AQUÍ
+                    string passHash = SecurityHelper.ComputeSha256Hash(txtPassword.Password);
+
                     var nuevo = new User
                     {
                         username = txtUsername.Text.Trim(),
-                        password_hash = txtPassword.Password,
+                        password_hash = passHash, // Guardamos el HASH
                         display_name = txtDisplayName.Text.Trim(),
                         role = rol,
                         is_active = true,
@@ -100,9 +104,9 @@ namespace GestorAlmacen.Views
                     edit.role = rol;
                     edit.is_active = (bool)chkActivo.IsChecked;
 
-                   
+
                     if (!string.IsNullOrEmpty(txtPassword.Password))
-                        edit.password_hash = txtPassword.Password;
+                        edit.password_hash = SecurityHelper.ComputeSha256Hash(txtPassword.Password);
                 }
 
                 try { db.SaveChanges(); Limpiar(); CargarDatos(); }
