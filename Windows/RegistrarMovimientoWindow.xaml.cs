@@ -24,9 +24,9 @@ namespace GestorAlmacen.Views.Windows
         }
 
         private ObservableCollection<DetalleItem> _carrito;
-        private int _usuarioId = 1; // DEBES OBTENER ESTO DEL LOGIN (Pasarlo en constructor)
+        private int _usuarioId = 1; 
 
-        // Constructor modificado
+        // Constructor
         public RegistrarMovimientoWindow(string restriccion = null)
         {
             InitializeComponent();
@@ -36,7 +36,7 @@ namespace GestorAlmacen.Views.Windows
             dgDetalles.ItemsSource = _carrito;
             CargarAreas();
 
-            // Llamamos a la nueva lógica de filtrado
+            // Llamamos a la lógica de filtrado
             ConfigurarCombo(restriccion);
         }
 
@@ -82,7 +82,7 @@ namespace GestorAlmacen.Views.Windows
             using (var db = new WMS_DBEntities())
             {
                 var areas = db.Areas.Where(a => a.is_active == true).ToList();
-                cmbAreaOrigen.ItemsSource = areas; // DisplayMemberPath="code" en XAML
+                cmbAreaOrigen.ItemsSource = areas; 
                 cmbAreaDestino.ItemsSource = areas;
             }
         }
@@ -93,28 +93,44 @@ namespace GestorAlmacen.Views.Windows
 
         private void btnBuscarProducto_Click(object sender, RoutedEventArgs e)
         {
-            using (var db = new WMS_DBEntities())
+            bool encontrado = BuscarProductoInterno(txtSkuBuscar.Text.Trim());
+
+            if (!encontrado)
             {
-                var prod = db.Products.FirstOrDefault(p => p.sku == txtSkuBuscar.Text);
-                if (prod != null)
-                {
-                    lblNombreProducto.Text = prod.name;
-                    lblNombreProducto.Tag = prod.product_id; // Guardamos ID oculto
-                }
-                else MessageBox.Show("Producto no encontrado.");
+                MessageBox.Show("Producto no encontrado en el catálogo.");
+            }
+            else
+            {
+                // Opcional: Mover el foco al campo de cantidad para agilizar
+                txtCantidad.Focus();
             }
         }
 
         private void btnAgregar_Click(object sender, RoutedEventArgs e)
         {
-            // Validaciones
+            // 1. VALIDACIÓN INTELIGENTE DE PRODUCTO
+            // Si el usuario no dio click en la lupa (Tag es null), intentamos buscarlo ahora automáticamente.
+            if (lblNombreProducto.Tag == null)
+            {
+                bool encontrado = BuscarProductoInterno(txtSkuBuscar.Text.Trim());
+                if (!encontrado)
+                {
+                    MessageBox.Show("Debe ingresar un SKU válido antes de agregar.", "Producto Inválido", MessageBoxButton.OK, MessageBoxImage.Warning);
+                    return; // Detenemos todo aquí, evitamos el crash
+                }
+            }
 
-            int.TryParse(txtCantidad.Text, out int cant);
-            if (cant <= 0) return;
+            // 2. Validar Cantidad
+            if (!int.TryParse(txtCantidad.Text, out int cant) || cant <= 0)
+            {
+                MessageBox.Show("Ingrese una cantidad válida mayor a 0.");
+                return;
+            }
 
+            // 3. Crear el objeto (El código sigue igual que antes)
             var item = new DetalleItem
             {
-                ProductId = (int)lblNombreProducto.Tag,
+                ProductId = (int)lblNombreProducto.Tag, // Ahora estamos seguros que esto no es null
                 Sku = txtSkuBuscar.Text,
                 NombreProducto = lblNombreProducto.Text,
                 Cantidad = cant
@@ -134,6 +150,13 @@ namespace GestorAlmacen.Views.Windows
 
             _carrito.Add(item);
             ActualizarTotales();
+
+            txtSkuBuscar.Text = "";
+            txtCantidad.Text = "";
+            lblNombreProducto.Text = "Seleccione un producto...";
+            lblNombreProducto.Tag = null; // Reiniciamos para obligar a buscar el siguiente
+            txtSkuBuscar.Focus(); // Volvemos el cursor al inicio
+
         }
         private void btnGuardarTodo_Click(object sender, RoutedEventArgs e)
         {
@@ -250,7 +273,63 @@ namespace GestorAlmacen.Views.Windows
 
 
         // Métodos auxiliares
-        private void btnQuitarFila_Click(object sender, RoutedEventArgs e) { /* ... */ }
+        private void btnQuitarFila_Click(object sender, RoutedEventArgs e) 
+        {
+            // Obtenemos el botón que disparó el evento
+            Button btn = sender as Button;
+
+            // Obtenemos el objeto de datos vinculado a esa fila (DetalleItem)
+            if (btn != null && btn.DataContext is DetalleItem itemSeleccionado)
+            {
+                // Lo eliminamos de la colección observable
+                // Al ser ObservableCollection, el DataGrid se actualiza solo visualmente
+                _carrito.Remove(itemSeleccionado);
+
+                // Actualizamos el contador total de artículos
+                ActualizarTotales();
+            }
+        }
+
+        // Método auxiliar para buscar sin repetir código
+        private bool BuscarProductoInterno(string sku)
+        {
+            if (string.IsNullOrWhiteSpace(sku))
+            {
+                MessageBox.Show("Por favor escriba un SKU.");
+                return false;
+            }
+
+            using (var db = new WMS_DBEntities())
+            {
+                var prod = db.Products.FirstOrDefault(p => p.sku == sku);
+
+                if (prod != null)
+                {
+                    // Producto encontrado: Llenamos los datos visuales y el Tag oculto
+                    lblNombreProducto.Text = prod.name;
+                    lblNombreProducto.Tag = prod.product_id;
+                    return true;
+                }
+                else
+                {
+                    // Producto no encontrado: Limpiamos para evitar errores
+                    lblNombreProducto.Text = "Producto no encontrado";
+                    lblNombreProducto.Tag = null;
+                    return false;
+                }
+            }
+        }
+
+        private void txtSkuBuscar_KeyDown(object sender, System.Windows.Input.KeyEventArgs e)
+        {
+            if (e.Key == System.Windows.Input.Key.Enter)
+            {
+                // Al dar Enter, buscamos el producto
+                btnBuscarProducto_Click(sender, e);
+            }
+        }
+
+
         private void ActualizarTotales() { txtTotalItems.Text = _carrito.Sum(x => x.Cantidad).ToString(); }
         private void btnCancelar_Click(object sender, RoutedEventArgs e) => Close();
     }

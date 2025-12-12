@@ -58,7 +58,7 @@
                             <ColumnDefinition Width="*"/>
                             <ColumnDefinition Width="Auto"/>
                         </Grid.ColumnDefinitions>
-                        <TextBox x:Name="txtSkuBuscar" Padding="5"/>
+                        <TextBox x:Name="txtSkuBuscar" Padding="5" KeyDown="txtSkuBuscar_KeyDown"/>
                         <Button Grid.Column="1" Content="🔍" Width="30" Click="btnBuscarProducto_Click"/>
                     </Grid>
                     <TextBlock x:Name="lblNombreProducto" Text="Seleccione un producto..." Foreground="Gray" FontStyle="Italic" Margin="0,5,0,0" FontSize="11"/>

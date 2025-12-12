@@ -1,0 +1,28 @@
+﻿<Window x:Class="GestorAlmacen.Views.TransferirCategoriaWindow"
+        xmlns="http://schemas.microsoft.com/winfx/2006/xaml/presentation"
+        xmlns:x="http://schemas.microsoft.com/winfx/2006/xaml"
+        Title="Reasignar Categoría de Productos" Height="250" Width="450"
+        WindowStartupLocation="CenterScreen" ResizeMode="NoResize">
+    <Grid Margin="15">
+        <Grid.RowDefinitions>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="Auto"/>
+            <RowDefinition Height="*"/>
+            <RowDefinition Height="Auto"/>
+        </Grid.RowDefinitions>
+
+        <TextBlock Grid.Row="0" Text="Reasignación de Productos" FontSize="16" FontWeight="Bold" Margin="0,0,0,10"/>
+
+        <TextBlock x:Name="txtMensaje" Grid.Row="1" TextWrapping="Wrap" Margin="0,0,0,15"/>
+
+        <StackPanel Grid.Row="2">
+            <TextBlock Text="Nueva Categoría Destino:" Margin="0,0,0,5" FontWeight="SemiBold"/>
+            <ComboBox x:Name="cmbCategorias" Height="28"/>
+        </StackPanel>
+
+        <StackPanel Grid.Row="3" Orientation="Horizontal" HorizontalAlignment="Right" Margin="0,15,0,0">
+            <Button Content="Aceptar y Transferir" x:Name="BtnAceptar" Click="BtnAceptar_Click" Padding="10,5" Margin="0,0,10,0" Background="#007ACC" Foreground="White"/>
+            <Button Content="Cancelar" x:Name="BtnCancelar" Click="BtnCancelar_Click" Padding="10,5"/>
+        </StackPanel>
+    </Grid>
+</Window>

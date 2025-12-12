@@ -1,8 +1,7 @@
 ﻿using System;
 using System.Linq;
 using System.Windows;
-using GestorAlmacen.Models; // Importante para acceder a la BD
-
+using GestorAlmacen.Models; 
 namespace GestorAlmacen.Views
 {
     public partial class LoginView : Window
