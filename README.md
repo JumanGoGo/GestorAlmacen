@@ -58,7 +58,7 @@ Archivo InstaladorBD.sql (estructura + datos)
 
 Documentación necesaria para ejecutarlo
 
-🚀 Notas Finales
+***** Notas Finales *****
 
 Este proyecto es de uso académico, por lo que puedes revisar, modificar y ejecutar el código sin restricciones.
 
